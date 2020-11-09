@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DNDinventory
+namespace DNDinventory.Model
 {
     public class Character
     {

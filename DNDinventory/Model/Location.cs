@@ -1,4 +1,4 @@
-﻿namespace DNDinventory
+﻿namespace DNDinventory.Model
 {
     public class Location
     {

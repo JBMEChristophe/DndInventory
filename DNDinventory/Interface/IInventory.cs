@@ -1,10 +1,11 @@
-﻿using System;
+﻿using DNDinventory.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DNDinventory
+namespace DNDinventory.Interface
 {
     public interface IInventory
     {

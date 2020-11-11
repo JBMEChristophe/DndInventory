@@ -40,6 +40,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -66,6 +68,13 @@
     <Compile Include="Model\Item.cs" />
     <Compile Include="Model\ItemSlot.cs" />
     <Compile Include="Model\Location.cs" />
+    <Compile Include="SocketFileTransfer\Headers.cs" />
+    <Compile Include="SocketFileTransfer\Listener.cs" />
+    <Compile Include="SocketFileTransfer\Packet\PacketReader.cs" />
+    <Compile Include="SocketFileTransfer\Packet\PacketWriter.cs" />
+    <Compile Include="SocketFileTransfer\TransferClient.cs" />
+    <Compile Include="SocketFileTransfer\TransferQueue.cs" />
+    <Compile Include="Model\Transfer.cs" />
     <Compile Include="TaskUtilities.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="XmlReader.cs" />

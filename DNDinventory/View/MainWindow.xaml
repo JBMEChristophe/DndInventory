@@ -7,6 +7,106 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="_Server">
+                <StackPanel  Orientation="Horizontal">
+                    <Label Content="Port:"/>
+                    <TextBox Text="{Binding Port}" Width="100" Margin="2" TextAlignment="Center"/>
+                </StackPanel>
+                <MenuItem Header="_Start" Command="{Binding StartServerCommand}" />
+                <MenuItem Header="_Stop"  Command="{Binding StopServerCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Client" >
+                <StackPanel  Orientation="Horizontal">
+                    <Label Content="Host:"/>
+                    <TextBox Text="{Binding Host}" Width="100" Margin="2" TextAlignment="Center"/>
+                </StackPanel>
+                <StackPanel  Orientation="Horizontal">
+                    <Label Content="Port:"/>
+                    <TextBox Text="{Binding Port}" Width="100" Margin="2" TextAlignment="Center"/>
+                </StackPanel>
+                <MenuItem Header="{Binding ConnectText}" Command="{Binding ConnectCommand}"/>
+            </MenuItem>
+            <MenuItem Header="Settings">
+                <MenuItem Header="{Binding SetFolderOutputTxt}" Command="{Binding SetOutputFolderCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <Button Grid.Row="1" Content="Test"/>
+
+        <Expander Margin="5" Grid.Row="2">
+            <Expander.Header>
+                <DockPanel VerticalAlignment="Stretch">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Grid.Column="0" Text="Connection:" />
+                            <TextBlock Grid.Column="0" Text="{Binding ConnectionStatus}" />                            
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="322,0,0,0">
+                            <TextBlock Margin="10,0,0,0" Text="Overall Progress" />
+                            <ProgressBar Margin="5,0,0,0" Width="259" Height="16" Value="{Binding ProgressOverall}" />
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
+            </Expander.Header>
+            <StackPanel Orientation="Vertical">
+                <ListView Margin="10" ItemsSource="{Binding Transfers}" Height="150">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Value.State}" Value="Paused">
+                                    <Setter Property="Background" Value="Yellow"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Value.State}" Value="Completed">
+                                    <Setter Property="Background" Value="Green"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Value.State}" Value="Stopped">
+                                    <Setter Property="Background" Value="Red"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Value.State}" Value="Running">
+                                    <Setter Property="Background" Value="White"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="ID" Width="120" DisplayMemberBinding="{Binding Key}" />
+                            <GridViewColumn Header="Filename" Width="50" DisplayMemberBinding="{Binding Value.Filename}" />
+                            <GridViewColumn Header="Type" Width="150" DisplayMemberBinding="{Binding Value.Type}" />
+                            <GridViewColumn Header="Progress" Width="150" DisplayMemberBinding="{Binding Value.Progress}" />
+                            <GridViewColumn>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Pause" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.PauseTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Key}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Stop" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.StopTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Key}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Margin="0,0,5,4" Content="Send File" MaxWidth="125" Command="{Binding SendFileCommand}" />
+                    <Button Margin="5,0,0,4" Content="Clear Completed" MaxWidth="125" Command="{Binding ClearCompletedCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
     </Grid>
 </Window>

@@ -13,5 +13,11 @@ namespace DNDinventory
     /// </summary>
     public partial class App : Application
     {
+        public static Random Random;
+
+        public App()
+        {
+            Random = new Random();
+        }
     }
 }

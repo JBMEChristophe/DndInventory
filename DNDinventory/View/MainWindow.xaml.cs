@@ -28,6 +28,8 @@ namespace DNDinventory.View
             InitializeComponent();
             _viewModel = new MainViewModel();
             DataContext = _viewModel;
+
+            Closing += _viewModel.OnWindowClosing;
         }
     }
 }

@@ -59,14 +59,14 @@ namespace InventoryControlLib
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
 
-                AddItem(0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true);
-                AddItem(1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
+                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true);
+                AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
             }
         }
 
-        private void AddItem(int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
+        private void AddItem(int id, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
         {
-            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
+            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(id, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
             Grid.SetColumn(item, x);
@@ -112,6 +112,7 @@ namespace InventoryControlLib
                 var y = cellY * CellHeight + screenPoint.Y;
 
                 bool occupied = false;
+                bool stacked = false;
                 foreach (var invItem in Inventory.Children)
                 {
                     if (invItem is Item)
@@ -123,6 +124,12 @@ namespace InventoryControlLib
                         }
                         if (gridCellsOccupied(cellX, cellY, item.ColumnSpan, item.RowSpan, curItem))
                         {
+                            if(item.ID == curItem.ID && item.IsStackable)
+                            {
+                                curItem.Quantity += item.Quantity;
+                                stacked = true;
+                                break;
+                            }
                             occupied = true;
                             break;
                         }
@@ -136,6 +143,7 @@ namespace InventoryControlLib
                     var startingX = item.Column * CellWidth + parentPoint.X;
                     var startingY = item.Row * CellHeight + parentPoint.Y;
                     p = new Point(startingX, startingY);
+                    item.Transform(p);
                 }
                 else
                 {
@@ -144,12 +152,15 @@ namespace InventoryControlLib
                         item.GridParent.Children.Remove(item);
                     }
 
-                    Inventory.Children.Add(item);
-                    item.GridParent = Inventory;
-                    item.Column = cellX;
-                    item.Row = cellY;
+                    if (!stacked)
+                    {
+                        Inventory.Children.Add(item);
+                        item.GridParent = Inventory;
+                        item.Column = cellX;
+                        item.Row = cellY;
+                        item.Transform(p);
+                    }
                 }
-                item.Transform(p);
             }
         }
 

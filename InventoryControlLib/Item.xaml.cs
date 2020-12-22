@@ -44,7 +44,7 @@ namespace InventoryControlLib
             this.parent = parent;
             if (model == null)
             {
-                this.model = new ItemModel(width, height, 0, 0);
+                this.model = new ItemModel(0, width, height, 0, 0);
             }
             else
             {
@@ -55,6 +55,30 @@ namespace InventoryControlLib
             }
             cellWidth = width;
             cellHeight = height;
+        }
+
+        public int ID
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return -1;
+                }
+                return model.ID;
+            }
+        }
+
+        public bool IsStackable
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return false;
+                }
+                return model.IsStackable;
+            }
         }
 
         public Point StartingPoint

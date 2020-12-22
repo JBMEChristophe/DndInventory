@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DNDinventory.View"
+        xmlns:inv="clr-namespace:InventoryControlLib;assembly=InventoryControlLib"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
@@ -37,8 +38,16 @@
                 <MenuItem Header="{Binding SetFolderOutputTxt}" Command="{Binding SetOutputFolderCommand}"/>
             </MenuItem>
         </Menu>
-
-        <Button Grid.Row="1" Content="Test"/>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <inv:InventoryGrid Grid.Column="0" Columns="3" Rows="7" MessageHub="{Binding Hub}"/>
+            <inv:InventoryGrid Grid.Column="2" Columns="5" Rows="4" MessageHub="{Binding Hub}"/>
+        </Grid>
 
         <Expander Margin="5" Grid.Row="2">
             <Expander.Header>

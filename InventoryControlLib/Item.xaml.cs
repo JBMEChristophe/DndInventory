@@ -31,6 +31,7 @@ namespace InventoryControlLib
 
         Point anchorPoint;
         Point currentPoint;
+        Point startingPoint;
         bool isInDrag = false;
 
         public event MousePressEvent MouseReleased;
@@ -43,7 +44,7 @@ namespace InventoryControlLib
             this.parent = parent;
             if (model == null)
             {
-                this.model = new ItemModel(width, height);
+                this.model = new ItemModel(width, height, 0, 0);
             }
             else
             {
@@ -54,6 +55,11 @@ namespace InventoryControlLib
             }
             cellWidth = width;
             cellHeight = height;
+        }
+
+        public Point StartingPoint
+        {
+            get { return startingPoint; }
         }
 
         double _cellWidth;
@@ -156,6 +162,86 @@ namespace InventoryControlLib
             }
         }
 
+        public int Column
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return 0;
+                }
+                return model.CellX;
+            }
+            set
+            {
+                if (model != null && model.CellX != value)
+                {
+                    model.CellX = value;
+                    OnPropertyChange("Column");
+                }
+            }
+        }
+
+        public int Row
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return 0;
+                }
+                return model.CellY;
+            }
+            set
+            {
+                if (model != null && model.CellY != value)
+                {
+                    model.CellY = value;
+                    OnPropertyChange("Row");
+                }
+            }
+        }
+
+        public int ColumnSpan
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return 0;
+                }
+                return model.CellSpanX;
+            }
+            set
+            {
+                if (model != null && model.CellSpanX != value)
+                {
+                    model.CellSpanX = value;
+                    OnPropertyChange("ColumnSpan");
+                }
+            }
+        }
+
+        public int RowSpan
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return 0;
+                }
+                return model.CellSpanY;
+            }
+            set
+            {
+                if (model != null && model.CellSpanY != value)
+                {
+                    model.CellSpanY = value;
+                    OnPropertyChange("RowSpan");
+                }
+            }
+        }
+
         public int Quantity
         {
             get
@@ -207,11 +293,12 @@ namespace InventoryControlLib
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var element = sender as FrameworkElement;
-            anchorPoint = e.GetPosition(null);
+            startingPoint = e.GetPosition(null);
+            anchorPoint = startingPoint;
             element.CaptureMouse();
             isInDrag = true;
             e.Handled = true;
-            MousePressed?.Invoke(this, e.GetPosition(null));
+            MousePressed?.Invoke(this, startingPoint);
         }
 
         private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -235,17 +322,33 @@ namespace InventoryControlLib
                 var element = sender as FrameworkElement;
                 currentPoint = e.GetPosition(null);
 
-                transform.X += (currentPoint.X - anchorPoint.X);
-                transform.Y += (currentPoint.Y - anchorPoint.Y);
                 if (currentPoint.X < Application.Current.MainWindow.RenderSize.Width && currentPoint.Y < Application.Current.MainWindow.RenderSize.Height
                     && currentPoint.X > 0 && currentPoint.Y > 0)
                 {
+                    transform.X += (currentPoint.X - anchorPoint.X);
+                    transform.Y += (currentPoint.Y - anchorPoint.Y);
                     this.RenderTransform = transform;
                     anchorPoint = currentPoint;
                 }
                 else
                 {
-                    transform = new TranslateTransform();
+                    var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+                    if (screenPoint.X + ItemWidth > Application.Current.MainWindow.RenderSize.Width)
+                    {
+                        transform.X += ((Application.Current.MainWindow.Width - screenPoint.X) - ItemWidth);
+                    }
+                    if (screenPoint.X < 0)
+                    {
+                        transform.X += (-screenPoint.X);
+                    }
+                    if (screenPoint.Y + ItemHeight > Application.Current.MainWindow.RenderSize.Height)
+                    {
+                        transform.Y += (Application.Current.MainWindow.Height - (screenPoint.Y + ItemHeight));
+                    }
+                    if (screenPoint.Y < 0)
+                    {
+                        transform.Y += (-screenPoint.Y);
+                    }
                     this.RenderTransform = transform;
                 }
             }

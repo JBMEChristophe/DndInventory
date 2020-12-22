@@ -9,10 +9,13 @@ namespace InventoryControlLib
 {
     public class ItemModel
     {
+        public int ID { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
         public int CellSpanX { get; set; }
         public int CellSpanY { get; set; }
+        public int CellX { get; set; }
+        public int CellY { get; set; }
         public int Quantity { get; set; }
         public bool IsStackable { get; set; }
 
@@ -31,31 +34,16 @@ namespace InventoryControlLib
             }
         }
         public BitmapImage BitMapImage { get; set; }
-
-        public ItemModel(double width, double height) : this(width, height, 1, 1, 1, false, null)
-        { }
-
-        public ItemModel(double width, double height, int spanX, int spanY) : this(width, height, spanX, spanY, 1, false, null)
-        { }
-
-        public ItemModel(double width, double height, int quantity) : this(width, height, 1, 1, quantity, quantity > 1, null)
-        { }
-
-        public ItemModel(double width, double height, int spanX, int spanY, int quantity) : this(width, height, spanX, spanY, quantity, true, null)
-        { }
-
-        public ItemModel(double width, double height, int spanX, int spanY, Uri image) : this(width, height, spanX, spanY, 1, false, image)
-        { }
-
-        public ItemModel(double width, double height, Uri image) : this(width, height, 1, 1, 1, false, image)
-        { }
-
-        public ItemModel(double width, double height, int spanX, int spanY, int quantity, bool isStackable, Uri image)
+        
+        public ItemModel(int id, double width, double height, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, Uri image = null)
         {
+            ID = id;
             Width = width;
             Height = height;
             CellSpanX = spanX;
             CellSpanY = spanY;
+            CellX = column;
+            CellY = row;
             Quantity = quantity;
             IsStackable = isStackable;
             Image = image;

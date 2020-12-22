@@ -14,7 +14,7 @@
         <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
     </UserControl.Resources>
     <Grid>
-        <Border BorderThickness="2" BorderBrush="Black" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
+        <Border BorderThickness="2" BorderBrush="Black" Background="LightGray" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
         <Image Source="{Binding Image}" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
         <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding IsQuantityVisible, Converter={StaticResource VisibleIfTrueConverter}}" >
             <Label Content="{Binding Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>

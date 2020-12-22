@@ -14,17 +14,27 @@ using WinForms = System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Collections.ObjectModel;
+using Easy.MessageHub;
 
 namespace DNDinventory.ViewModel
 {
     class MainViewModel : INotifyPropertyChanged
     {
+        private readonly IMessageHub hub;
         private Listener listener;
         private TransferClient transferClient;
         private string outputFolder;
         private Timer timerOverallProgress;
 
         private bool serverRunning;
+
+        public IMessageHub Hub
+        {
+            get
+            {
+                return hub;
+            }
+        }
 
         private string host;
         public string Host
@@ -551,7 +561,7 @@ namespace DNDinventory.ViewModel
 
         public MainViewModel()
         {
-
+            hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
 

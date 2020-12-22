@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2035
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DNDinventory", "DNDinventory\DNDinventory.csproj", "{97B1AA67-C1F6-460C-A644-C0DDBA3BFB12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InventoryControlLib", "InventoryControlLib\InventoryControlLib.csproj", "{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{97B1AA67-C1F6-460C-A644-C0DDBA3BFB12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97B1AA67-C1F6-460C-A644-C0DDBA3BFB12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97B1AA67-C1F6-460C-A644-C0DDBA3BFB12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

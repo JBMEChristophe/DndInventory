@@ -59,24 +59,39 @@ namespace InventoryControlLib
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
 
-                Item arrow = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(CellWidth, CellHeight, 1, 1, 1, true, new Uri("https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png")));
-                arrow.MouseReleased += Item_MouseReleased;
-                arrow.MousePressed += Item_MousePressed;
-                Inventory.Children.Add(arrow);
-
-                Item sword = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(CellWidth, CellHeight, 1, 2, 1, false, new Uri("https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png")));
-                Grid.SetRowSpan(sword, 2);
-                sword.MouseReleased += Item_MouseReleased;
-                sword.MousePressed += Item_MousePressed;
-                Inventory.Children.Add(sword);
+                AddItem(0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true);
+                AddItem(1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
             }
+        }
+
+        private void AddItem(int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
+        {
+            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
+            Grid.SetColumnSpan(item, spanX);
+            Grid.SetRowSpan(item, spanY);
+            Grid.SetColumn(item, x);
+            Grid.SetRow(item, y);
+            item.MouseReleased += Item_MouseReleased;
+            item.MousePressed += Item_MousePressed;
+            Inventory.Children.Add(item);
         }
 
         private void Item_MousePressed(object sender, Point mousePosition)
         {
             if (sender is Item)
             {
+                var item = sender as Item;
             }
+        }
+
+        private bool gridCellsOccupied(int newX, int newY, int spanX, int spanY, Item i2)
+        {
+            var i1Start = new Point(newX, newY);
+            var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
+            var i2Start = new Point(i2.Column, i2.Row);
+            var i2End = new Point(i2.Column + i2.ColumnSpan - 1, i2.Row + i2.RowSpan - 1);
+
+            return (i2End.X >= i1Start.X && i2Start.X <= i1End.X) && (i2End.Y >= i1Start.Y && i2Start.Y <= i1End.Y);
         }
 
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
@@ -95,15 +110,45 @@ namespace InventoryControlLib
                 var cellY = (int)Math.Floor((releasePoint.Y - screenPoint.Y) / CellHeight);
                 var x = cellX * CellWidth + screenPoint.X;
                 var y = cellY * CellHeight + screenPoint.Y;
-                
-                if (item.GridParent.Children.Contains(item))
+
+                bool occupied = false;
+                foreach (var invItem in Inventory.Children)
                 {
-                    item.GridParent.Children.Remove(item);
+                    if (invItem is Item)
+                    {
+                        var curItem = invItem as Item;
+                        if (curItem == item)
+                        { 
+                            continue;
+                        }
+                        if (gridCellsOccupied(cellX, cellY, item.ColumnSpan, item.RowSpan, curItem))
+                        {
+                            occupied = true;
+                            break;
+                        }
+                    }
                 }
 
-                Inventory.Children.Add(item);
-                item.GridParent = Inventory;
                 Point p = new Point(x, y);
+                if (occupied)
+                {
+                    var parentPoint = item.GridParent.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+                    var startingX = item.Column * CellWidth + parentPoint.X;
+                    var startingY = item.Row * CellHeight + parentPoint.Y;
+                    p = new Point(startingX, startingY);
+                }
+                else
+                {
+                    if (item.GridParent.Children.Contains(item))
+                    {
+                        item.GridParent.Children.Remove(item);
+                    }
+
+                    Inventory.Children.Add(item);
+                    item.GridParent = Inventory;
+                    item.Column = cellX;
+                    item.Row = cellY;
+                }
                 item.Transform(p);
             }
         }

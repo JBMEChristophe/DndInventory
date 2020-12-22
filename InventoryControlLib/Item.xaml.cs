@@ -49,6 +49,8 @@ namespace InventoryControlLib
             {
                 this.model = model;
                 OnPropertyChange("Image");
+                OnPropertyChange("Quantity");
+                OnPropertyChange("IsQuantityVisible");
             }
             cellWidth = width;
             cellHeight = height;
@@ -118,9 +120,12 @@ namespace InventoryControlLib
             }
             set
             {
-                model.Image = value;
-                OnPropertyChange("ImageUri");
-                OnPropertyChange("Image");
+                if (model != null && model.Image != value)
+                {
+                    model.Image = value;
+                    OnPropertyChange("ImageUri");
+                    OnPropertyChange("Image");
+                }
             }
         }
 
@@ -147,6 +152,46 @@ namespace InventoryControlLib
                 if(parent != value)
                 {
                     parent = value;
+                }
+            }
+        }
+
+        public int Quantity
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return 1;
+                }
+                return model.Quantity;
+            }
+            set
+            {
+                if (model != null && model.Quantity != value)
+                {
+                    model.Quantity = value;
+                    OnPropertyChange("Quantity");
+                }
+            }
+        }
+
+        public bool IsQuantityVisible
+        {
+            get
+            {
+                if (model == null)
+                {
+                    return false;
+                }
+                return model.IsStackable;
+            }
+            set
+            {
+                if (model != null && model.IsStackable != value)
+                {
+                    model.IsStackable = value;
+                    OnPropertyChange("IsVisible");
                 }
             }
         }

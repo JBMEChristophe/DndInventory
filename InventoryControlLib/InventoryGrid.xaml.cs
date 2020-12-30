@@ -61,6 +61,7 @@ namespace InventoryControlLib
 
                 AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true);
                 AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
+                AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX:3);
             }
         }
 

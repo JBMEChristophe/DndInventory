@@ -43,10 +43,13 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="50"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <inv:InventoryGrid Grid.Column="0" Columns="3" Rows="7" MessageHub="{Binding Hub}"/>
-            <inv:InventoryGrid Grid.Column="2" Columns="5" Rows="4" MessageHub="{Binding Hub}"/>
+            <inv:InventoryGrid Grid.Column="2" Columns="5" Rows="5" MessageHub="{Binding Hub}"/>
+            <inv:InventoryGrid Grid.Column="4" Columns="4" Rows="5" MessageHub="{Binding Hub}"/>
         </Grid>
 
         <Expander Margin="5" Grid.Row="2">

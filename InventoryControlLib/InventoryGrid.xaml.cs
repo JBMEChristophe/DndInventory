@@ -94,6 +94,16 @@ namespace InventoryControlLib
             return (i2End.X >= i1Start.X && i2Start.X <= i1End.X) && (i2End.Y >= i1Start.Y && i2Start.Y <= i1End.Y);
         }
 
+        private bool IsWithinGridBoundary(int newX, int newY, int spanX, int spanY)
+        {
+            var i1Start = new Point(newX, newY);
+            var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
+            var i2Start = new Point(0, 0);
+            var i2End = new Point(Inventory.ColumnDefinitions.Count - 1, Inventory.RowDefinitions.Count - 1);
+
+            return (i1Start.X >= i2Start.X && i1End.X <= i2End.X) && (i1Start.Y >= i2Start.Y && i1End.Y <= i2End.Y);
+        }
+
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
             var item = positionUpdate.Item;
@@ -111,7 +121,7 @@ namespace InventoryControlLib
                 var x = cellX * CellWidth + screenPoint.X;
                 var y = cellY * CellHeight + screenPoint.Y;
 
-                bool occupied = false;
+                bool cancelMove = false;
                 bool stacked = false;
                 foreach (var invItem in Inventory.Children)
                 {
@@ -130,14 +140,18 @@ namespace InventoryControlLib
                                 stacked = true;
                                 break;
                             }
-                            occupied = true;
+                            cancelMove = true;
                             break;
                         }
                     }
                 }
+                if (!IsWithinGridBoundary(cellX, cellY, item.ColumnSpan, item.RowSpan))
+                {
+                    cancelMove = true;
+                }
 
                 Point p = new Point(x, y);
-                if (occupied)
+                if (cancelMove)
                 {
                     var parentPoint = item.GridParent.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
                     var startingX = item.Column * CellWidth + parentPoint.X;

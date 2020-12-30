@@ -1,4 +1,5 @@
 ﻿using Easy.MessageHub;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,9 +16,10 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace InventoryControlLib
+namespace InventoryControlLib.View
 {
     public delegate void MousePressEvent(object sender, Point mousePosition);
+    public delegate void RightClickEvent(object sender);
 
     /// <summary>
     /// Interaction logic for Item.xaml
@@ -36,6 +38,7 @@ namespace InventoryControlLib
 
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
+        public event RightClickEvent ItemSplitClicked;
 
         public Item(IMessageHub hub, Grid parent, double width, double height, ItemModel model = null)
         {
@@ -53,6 +56,7 @@ namespace InventoryControlLib
                 OnPropertyChange("Quantity");
                 OnPropertyChange("IsQuantityVisible");
             }
+            this.model.Parent = this;
             cellWidth = width;
             cellHeight = height;
         }
@@ -304,6 +308,39 @@ namespace InventoryControlLib
                     OnPropertyChange("IsVisible");
                 }
             }
+        }
+
+        public ItemModel Model
+        {
+            get
+            {
+                return model;
+            }
+        }
+
+        DelegateCommand splitCommand;
+        public ICommand SplitCommand
+        {
+            get
+            {
+                if (splitCommand == null)
+                {
+                    splitCommand = new DelegateCommand(ExecuteSplit);
+                }
+                return splitCommand;
+            }
+        }
+
+        private void ExecuteSplit()
+        {
+            ItemSplitClicked?.Invoke(this);
+        }
+
+        public void RemoveEvents()
+        {
+            MouseReleased = null;
+            MousePressed = null;
+            ItemSplitClicked = null;
         }
 
         public void Transform(Point p)

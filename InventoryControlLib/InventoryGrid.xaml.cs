@@ -1,4 +1,6 @@
 ﻿using Easy.MessageHub;
+using InventoryControlLib.View;
+using InventoryControlLib.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -59,7 +61,7 @@ namespace InventoryControlLib
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
 
-                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true);
+                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true , quantity: 5);
                 AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
                 AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX:3);
             }
@@ -74,7 +76,42 @@ namespace InventoryControlLib
             Grid.SetRow(item, y);
             item.MouseReleased += Item_MouseReleased;
             item.MousePressed += Item_MousePressed;
+            item.ItemSplitClicked += Item_SplitClicked;
             Inventory.Children.Add(item);
+        }
+
+        private void AddItem(ItemModel item, int x, int y, int quantity)
+        {
+            AddItem(item.ID, x, y, item.Image.ToString(), item.CellSpanX, item.CellSpanY, quantity, item.IsStackable);
+        }
+
+        private Point? NextAvailableCell(int spanX, int spanY)
+        {
+            for (int y = 0; y < Inventory.RowDefinitions.Count; y++)
+            {
+                for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
+                {
+                    bool cellAvailable = true;
+                    foreach (var invItem in Inventory.Children)
+                    {
+                        if (invItem is Item)
+                        {
+                            var curItem = invItem as Item;
+                            if (gridCellsOccupied(x, y, spanX, spanY, curItem))
+                            {
+                                cellAvailable = false;
+                            }
+                        }
+                    }
+
+                    if(cellAvailable)
+                    {
+                        return new Point(x, y);
+                    }
+                }
+            }
+
+            return null;
         }
 
         private void Item_MousePressed(object sender, Point mousePosition)
@@ -82,7 +119,32 @@ namespace InventoryControlLib
             if (sender is Item)
             {
                 var item = sender as Item;
+                Panel.SetZIndex(this, 998);
+                Panel.SetZIndex(item, 999);
             }
+        }
+        private void Item_SplitClicked(object sender)
+        {
+            if (sender is Item)
+            {
+                var item = sender as Item;
+                ItemSplitViewModel viewModel = new ItemSplitViewModel(item.Model);
+                viewModel.SplitClicked += ItemDetailViewModel_SplitClicked;
+                ItemSplitWindow detailWindow = new ItemSplitWindow(viewModel);
+                detailWindow.ShowDialog();
+            }
+        }
+
+        private bool ItemDetailViewModel_SplitClicked(ItemModel sender, int value)
+        {
+            var cell = NextAvailableCell(sender.CellSpanX, sender.CellSpanY);
+            if (cell.HasValue)
+            {
+                AddItem(sender, (int)cell.Value.X, (int)cell.Value.Y, value);
+                sender.Parent.Quantity -= value;
+                return true;
+            }
+            return false;
         }
 
         private bool gridCellsOccupied(int newX, int newY, int spanX, int spanY, Item i2)
@@ -165,10 +227,14 @@ namespace InventoryControlLib
                     if (item.GridParent.Children.Contains(item))
                     {
                         item.GridParent.Children.Remove(item);
+                        item.RemoveEvents();
                     }
 
                     if (!stacked)
                     {
+                        item.MouseReleased += Item_MouseReleased;
+                        item.MousePressed += Item_MousePressed;
+                        item.ItemSplitClicked += Item_SplitClicked;
                         Inventory.Children.Add(item);
                         item.GridParent = Inventory;
                         item.Column = cellX;
@@ -183,6 +249,9 @@ namespace InventoryControlLib
         {
             if (sender is Item)
             {
+                var item = sender as Item;
+                Panel.SetZIndex(this, 1);
+                Panel.SetZIndex(item, 2);
             }
         }
 

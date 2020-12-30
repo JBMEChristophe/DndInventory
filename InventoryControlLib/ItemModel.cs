@@ -1,4 +1,5 @@
-﻿using System;
+﻿using InventoryControlLib.View;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,7 @@ namespace InventoryControlLib
         public int CellY { get; set; }
         public int Quantity { get; set; }
         public bool IsStackable { get; set; }
+        public Item Parent { get; set; }
 
         Uri imageUri;
         public Uri Image 

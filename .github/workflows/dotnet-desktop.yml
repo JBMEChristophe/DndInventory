@@ -66,8 +66,8 @@ jobs:
         fetch-depth: 0
 
     # Install Nuget
-    - name: Install Nuget.exe
-      uses: warrenbuckley/Setup-Nuget@v1
+    - name: Setup NuGet.exe for use with actions
+      uses: NuGet/setup-nuget@v1.0.5
 
     # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
     - name: Setup MSBuild.exe

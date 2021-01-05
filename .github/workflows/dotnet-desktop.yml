@@ -90,5 +90,7 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v2.2.2
       with:
-        name: DnDInventory
-        path: DNDinventory\bin\Release
+        name: DnDInventory_$env:Configuration
+        path: DNDinventory\bin\$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}

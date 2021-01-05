@@ -83,12 +83,12 @@ jobs:
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:DeployOnBuild=true /p:PublishProfile=FolderProfile /p:Configuration=$env:Configuration
+      run: msbuild $env:Solution_Name /t:Restore /p:DeployOnBuild=true /p:Configuration=$env:Configuration
       env:
         Configuration: ${{ matrix.configuration }}
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v2.2.2
       with:
         name: DnDInventory
-        path: bin\Release\Publish
+        path: bin\Release

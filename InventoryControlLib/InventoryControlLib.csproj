@@ -4,19 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{97B1AA67-C1F6-460C-A644-C0DDBA3BFB12}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <RootNamespace>DNDinventory</RootNamespace>
-    <AssemblyName>DNDinventory</AssemblyName>
+    <ProjectGuid>{3F2C521F-40E1-4629-A2D7-FDCCFF25DE19}</ProjectGuid>
+    <OutputType>library</OutputType>
+    <RootNamespace>InventoryControlLib</RootNamespace>
+    <AssemblyName>InventoryControlLib</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -26,7 +24,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -43,8 +40,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -59,45 +54,33 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
+    <Page Include="InventoryGrid.xaml">
       <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Compile Include="ASyncCommand.cs" />
-    <Compile Include="Interface\IAsyncCommand.cs" />
-    <Compile Include="Interface\IErrorHandler.cs" />
-    <Compile Include="Interface\IInventory.cs" />
-    <Compile Include="Model\Inventory.cs" />
-    <Compile Include="Model\Item.cs" />
-    <Compile Include="Model\ItemSlot.cs" />
-    <Compile Include="Model\Location.cs" />
-    <Compile Include="SocketFileTransfer\Headers.cs" />
-    <Compile Include="SocketFileTransfer\Listener.cs" />
-    <Compile Include="SocketFileTransfer\Packet\PacketReader.cs" />
-    <Compile Include="SocketFileTransfer\Packet\PacketWriter.cs" />
-    <Compile Include="SocketFileTransfer\TransferClient.cs" />
-    <Compile Include="SocketFileTransfer\TransferQueue.cs" />
-    <Compile Include="Model\Transfer.cs" />
-    <Compile Include="TaskUtilities.cs" />
-    <Compile Include="ViewModel\MainViewModel.cs" />
-    <Compile Include="XmlReader.cs" />
-    <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Model\Character.cs" />
-    <Compile Include="Model\DndClass.cs" />
-    <Compile Include="Model\DndRace.cs" />
-    <Compile Include="View\MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
+    <Page Include="View\Item.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ItemSplitWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GridHelper.cs" />
+    <Compile Include="InventoryGrid.xaml.cs">
+      <DependentUpon>InventoryGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\Item.xaml.cs">
+      <DependentUpon>Item.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModel\ItemSplitViewModel.cs" />
+    <Compile Include="View\ItemSplitWindow.xaml.cs">
+      <DependentUpon>ItemSplitWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ItemModel.cs" />
+    <Compile Include="ItemPositionUpdate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -122,16 +105,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\CustomControls\CustomControls.csproj">
       <Project>{061395ab-2854-41c7-a3e0-5ae1574d2328}</Project>
       <Name>CustomControls</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\InventoryControlLib\InventoryControlLib.csproj">
-      <Project>{3f2c521f-40e1-4629-a2d7-fdccff25de19}</Project>
-      <Name>InventoryControlLib</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

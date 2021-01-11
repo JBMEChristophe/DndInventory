@@ -25,7 +25,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Filename = fileName;
                 queue.Client = client;
                 queue.Type = QueueType.Upload;
-                queue.FS = new FileStream(fileName, FileMode.Open);
+                queue.FS = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
                 queue.Thread = new Thread(new ParameterizedThreadStart(transferProc));
                 queue.Thread.IsBackground = true;
                 queue.Id = App.Random.Next();

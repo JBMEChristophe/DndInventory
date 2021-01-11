@@ -535,6 +535,7 @@ namespace DNDinventory.ViewModel
                     if (item.Value.Id == queue.Id.ToString())
                     {
                         item.Value.Progress = $"{queue.Progress}%";
+                        break;
                     }
                 }
             }
@@ -594,6 +595,18 @@ namespace DNDinventory.ViewModel
                 if (item.Value.Id == queue.Id.ToString())
                 {
                     item.Value.State = TransferState.Completed;
+
+                    if (serverRunning && !queue.SelfCreated)
+                    {
+                        foreach (var client in transferClients)
+                        {
+                            if(client != (sender as TransferClient))
+                            {
+                                client.QueueTransfer(Path.Combine(outputFolder,queue.Filename));
+                            }
+                        }
+                    }
+                    break;
                 }
             }
         }

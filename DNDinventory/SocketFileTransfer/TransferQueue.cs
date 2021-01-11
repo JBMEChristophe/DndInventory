@@ -30,6 +30,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Thread.IsBackground = true;
                 queue.Id = App.Random.Next();
                 queue.Length = queue.FS.Length;
+                queue.SelfCreated = true;
                 return queue;
             }
             catch (Exception)
@@ -49,6 +50,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.FS.SetLength(length);
                 queue.Length = length;
                 queue.Id = id;
+                queue.SelfCreated = false;
                 return queue;
             }
             catch (Exception)
@@ -73,6 +75,7 @@ namespace DNDinventory.SocketFileTransfer
 
         public bool Running { get; set; }
         public bool Paused { get; set; }
+        public bool SelfCreated { get; set; }
 
         public string Filename { get; set; }
 

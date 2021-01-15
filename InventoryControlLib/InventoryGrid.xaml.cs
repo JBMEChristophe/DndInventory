@@ -27,6 +27,8 @@ namespace InventoryControlLib
         private IMessageHub hub;
         private Guid subscriptionToken;
 
+        private GridManager manager;
+
         public InventoryGrid()
         {
             this.DataContext = this;
@@ -39,6 +41,8 @@ namespace InventoryControlLib
 
             if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
             {
+                manager = GridManager.Instance;
+                manager.SetHub(MessageHub);
 
                 for (int y = 0; y < Inventory.ColumnDefinitions.Count; y++)
                 {
@@ -60,6 +64,16 @@ namespace InventoryControlLib
 
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+
+                hub.Publish(new GridAddUpdate
+                {
+                    Grid = new UpdateGrid
+                    {
+                        ScreenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow),
+                        CellSize = new Size(CellWidth, CellHeight),
+                        Size = new Size(Columns * CellWidth, Rows * CellHeight)
+                    }
+                });
 
                 AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true , quantity: 5);
                 AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);

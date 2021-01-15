@@ -100,14 +100,14 @@
                             <GridViewColumn>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Pause" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.PauseTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Key}" />
+                                        <Button Content="Pause" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.PauseTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Value}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
                             <GridViewColumn>
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="Stop" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.StopTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Key}" />
+                                        <Button Content="Stop" Margin="2" VerticalAlignment="Center" Command="{Binding Path=DataContext.StopTransferCommand, RelativeSource={RelativeSource FindAncestor, AncestorType=ListView}}" CommandParameter="{Binding Value}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>

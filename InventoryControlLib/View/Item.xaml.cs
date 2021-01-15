@@ -372,7 +372,8 @@ namespace InventoryControlLib.View
                 e.Handled = true;
                 currentPoint = e.GetPosition(null);
                 MouseReleased?.Invoke(this, currentPoint);
-                hub.Publish(new ItemPositionUpdate { Item = this, Position = currentPoint});
+                var itemPosition = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+                hub.Publish(new ItemPositionUpdate { Item = this, Position = itemPosition });
             }
         }
 

@@ -72,6 +72,7 @@
     <Compile Include="Model\ItemSlot.cs" />
     <Compile Include="Model\Location.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SettingsFileHandler.cs" />
     <Compile Include="SocketFileTransfer\Headers.cs" />
     <Compile Include="SocketFileTransfer\Listener.cs" />
     <Compile Include="SocketFileTransfer\Packet\PacketReader.cs" />

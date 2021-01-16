@@ -23,6 +23,7 @@ namespace DNDinventory.ViewModel
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
+        private SettingsFileHandler settingsFileHandler;
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
@@ -50,7 +51,6 @@ namespace DNDinventory.ViewModel
                 {
                     host = value;
                     OnPropertyChange("Host");
-                    Properties.Settings.Default.Host = host;
                 }
             }
         }
@@ -68,7 +68,6 @@ namespace DNDinventory.ViewModel
                 {
                     port = value;
                     OnPropertyChange("Port");
-                    Properties.Settings.Default.Port = port;
                 }
             }
         }
@@ -120,7 +119,6 @@ namespace DNDinventory.ViewModel
                 {
                     setFolderOutputTxt = $"Set file folder ({value})";
                     OnPropertyChange("SetFolderOutputTxt");
-                    Properties.Settings.Default.OutputFolder = value;
                 }
             }
         }
@@ -442,17 +440,16 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteSaveSettings () {
             using (WinForms.SaveFileDialog sfd = new WinForms.SaveFileDialog()) {
-                sfd.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                sfd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
                 sfd.FilterIndex = 1;
                 sfd.InitialDirectory = settingsFileLocation;
 
                 if (sfd.ShowDialog() == WinForms.DialogResult.OK) {
                     settingsFileLocation = sfd.FileName;
-
-                    // Actually save the settings file
-                    ExecuteQuickSaveSettings();
-
                     SettingsFileLocationTxt = settingsFileLocation;
+
+                    // save the settings file using quicksave
+                    ExecuteQuickSaveSettings();
                 }
             }
         }
@@ -468,14 +465,8 @@ namespace DNDinventory.ViewModel
         }
 
         private void ExecuteQuickSaveSettings () {
-            // Save settings file to settingsFileLocation
-            StreamWriter sw = new StreamWriter(settingsFileLocation);
-
-            sw.WriteLine(Host);
-            sw.WriteLine(Port);
-            sw.WriteLine(outputFolder);
-
-            sw.Close();
+            PrepareSavedSettings();
+            settingsFileHandler.WriteToXml(settingsFileLocation);
         }
 
         DelegateCommand loadSettingsCommand;
@@ -490,17 +481,16 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteLoadSettings () {
             using (WinForms.OpenFileDialog ofd = new WinForms.OpenFileDialog()) {
-                ofd.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                ofd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
                 ofd.FilterIndex = 1;
                 ofd.InitialDirectory = settingsFileLocation;
 
                 if (ofd.ShowDialog() == WinForms.DialogResult.OK) {
                     settingsFileLocation = ofd.FileName;
-
-                    // Actually load the settings file
-                    ExecuteQuickLoadSettings();
-
                     SettingsFileLocationTxt = settingsFileLocation;
+
+                    // load the settings file using quickload
+                    ExecuteQuickLoadSettings();
                 }
             }
         }
@@ -516,21 +506,9 @@ namespace DNDinventory.ViewModel
         }
 
         private void ExecuteQuickLoadSettings () {
-            // Load settings file from settingsFileLocation
-            if (File.Exists(settingsFileLocation)) {
-                StreamReader sr = new StreamReader(settingsFileLocation);
-
-                try {
-                    Host = sr.ReadLine();
-                    Port = sr.ReadLine();
-                    outputFolder = sr.ReadLine();
-                    setFolderOutputTxt = outputFolder;
-                } 
-                catch {
-                    throw new EndOfStreamException("Settings file incomplete/missing");
-                }
-                sr.Close();
-            }
+            // Load settings from settingsFileLocation
+            settingsFileHandler.ReadFromXml(settingsFileLocation);
+            UpdateSavedSettings();
         }
 
         DelegateCommand clearCompletedCommand;
@@ -752,13 +730,13 @@ namespace DNDinventory.ViewModel
             hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
+            settingsFileHandler = new SettingsFileHandler();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;
             timerOverallProgress.Elapsed += TimerOverallProgress_Elapsed;
-            
-            //outputFolder = "Transfers"; //#TODO load from save
-            outputFolder = Properties.Settings.Default.OutputFolder;
+
+            initDefaults();
 
             Transfers = new ObservableCollection<KeyValuePair<string, Transfer>>();
 
@@ -766,8 +744,6 @@ namespace DNDinventory.ViewModel
             {
                 Directory.CreateDirectory(outputFolder);
             }
-
-            initDefaults();
         }
 
         public void OnWindowClosing(object sender, CancelEventArgs e)
@@ -776,21 +752,32 @@ namespace DNDinventory.ViewModel
             {
                 deregisterEvents(client);
             }
+            Properties.Settings.Default.Save();
         }
 
         private void initDefaults()
         {
-            //Host = "localhost"; //#TODO load from save
-            Host = Properties.Settings.Default.Host;
-            //Port = "100"; //#TODO load from save
-            Port = Properties.Settings.Default.Port;
             settingsFileLocation = Properties.Settings.Default.SettingsFileLocation;
+            ExecuteQuickLoadSettings();
             ConnectionStatus = "No connection";
             ConnectText = "Connect";
             serverRunning = false;
             ProgressOverall = 0;
             SetFolderOutputTxt = outputFolder;
             SettingsFileLocationTxt = settingsFileLocation;
+        }
+
+        private void UpdateSavedSettings() {
+            Host = settingsFileHandler.currentSettings.host;
+            Port = settingsFileHandler.currentSettings.port;
+            outputFolder = settingsFileHandler.currentSettings.outputFolder;
+            SetFolderOutputTxt = outputFolder;
+        }
+
+        private void PrepareSavedSettings() {
+            settingsFileHandler.currentSettings.host = host;
+            settingsFileHandler.currentSettings.port = port;
+            settingsFileHandler.currentSettings.outputFolder = outputFolder;
         }
 
         private void TimerOverallProgress_Elapsed(object sender, ElapsedEventArgs e)

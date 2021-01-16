@@ -25,43 +25,7 @@ namespace DNDinventory.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("localhost")]
-        public string Host {
-            get {
-                return ((string)(this["Host"]));
-            }
-            set {
-                this["Host"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("100")]
-        public string Port {
-            get {
-                return ((string)(this["Port"]));
-            }
-            set {
-                this["Port"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Transfers")]
-        public string OutputFolder {
-            get {
-                return ((string)(this["OutputFolder"]));
-            }
-            set {
-                this["OutputFolder"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("savedsettings.txt")]
+        [global::System.Configuration.DefaultSettingValueAttribute("settingsfile.xml")]
         public string SettingsFileLocation {
             get {
                 return ((string)(this["SettingsFileLocation"]));

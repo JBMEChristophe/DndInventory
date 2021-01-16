@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GridHelper.cs" />
+    <Compile Include="GridManager.cs" />
     <Compile Include="InventoryGrid.xaml.cs">
       <DependentUpon>InventoryGrid.xaml</DependentUpon>
     </Compile>
@@ -80,7 +81,7 @@
       <DependentUpon>ItemSplitWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ItemModel.cs" />
-    <Compile Include="ItemPositionUpdate.cs" />
+    <Compile Include="HubUpdates.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -22,7 +22,7 @@ namespace DNDinventory.ViewModel
     {
         private readonly IMessageHub hub;
         private Listener listener;
-        private TransferClient transferClient;
+        private List<TransferClient> transferClients;
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
@@ -197,15 +197,19 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteConnect()
         {
-            if (transferClient==null)
+            if (transferClients.Count <= 0)
             {
-                transferClient = new TransferClient();
+                var transferClient = new TransferClient();
+                transferClients.Add(transferClient);
                 transferClient.Connect(Host.Trim(), int.Parse(Port.Trim()), connectCallback);
             }
             else
             {
-                transferClient.Close();
-                transferClient = null;
+                foreach (var client in transferClients)
+                {
+                    client.Close();
+                }
+                transferClients.Clear();
             }
 
             sendFileCommand.RaiseCanExecuteChanged();
@@ -276,9 +280,12 @@ namespace DNDinventory.ViewModel
                 return;
             }
 
-            if (transferClient!=null)
+            if (transferClients.Count > 0)
             {
-                transferClient.Close();
+                foreach (var client in transferClients)
+                {
+                    client.Close();
+                }
             }
 
             listener.Stop();
@@ -310,7 +317,7 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteSendFile()
         {
-            if (transferClient == null)
+            if (transferClients.Count <= 0)
             {
                 return;
             }
@@ -324,7 +331,10 @@ namespace DNDinventory.ViewModel
                 {
                     foreach (var file in ofd.FileNames)
                     {
-                        transferClient.QueueTransfer(file);
+                        foreach (var client in transferClients)
+                        {
+                            client.QueueTransfer(file);
+                        }
                     }
                 }
             }
@@ -332,67 +342,55 @@ namespace DNDinventory.ViewModel
 
         private bool CanExecuteSendFile()
         {
-            return (transferClient != null);
+            return (transferClients.Count > 0);
         }
 
-        DelegateCommand<string> pauseTransferCommand;
+        DelegateCommand<Transfer> pauseTransferCommand;
         public ICommand PauseTransferCommand
         {
             get
             {
                 if (pauseTransferCommand == null)
                 {
-                    pauseTransferCommand = new DelegateCommand<string>(ExecutePauseTransfer, CanExecutePauseTransfer);
+                    pauseTransferCommand = new DelegateCommand<Transfer>(ExecutePauseTransfer, CanExecutePauseTransfer);
                 }
                 return pauseTransferCommand;
             }
         }
 
-        private void ExecutePauseTransfer(string id)
+        private void ExecutePauseTransfer(Transfer transfer)
         {
-            if (transferClient == null)
-            {
-                return;
-            }
-
-            Transfer transfer = Transfers.Single(i => i.Value.Id == id).Value;
             var queue = transfer.Queue;
             queue.Client.PauseTransfer(queue);
         }
 
-        private bool CanExecutePauseTransfer(string id)
+        private bool CanExecutePauseTransfer(Transfer transfer)
         {
             return true;
         }
 
-        DelegateCommand<string> stopTransferCommand;
+        DelegateCommand<Transfer> stopTransferCommand;
         public ICommand StopTransferCommand
         {
             get
             {
                 if (stopTransferCommand == null)
                 {
-                    stopTransferCommand = new DelegateCommand<string>(ExecuteStopTransfer, CanExecuteStopTransfer);
+                    stopTransferCommand = new DelegateCommand<Transfer>(ExecuteStopTransfer, CanExecuteStopTransfer);
                 }
                 return stopTransferCommand;
             }
         }
 
-        private void ExecuteStopTransfer(string id)
+        private void ExecuteStopTransfer(Transfer transfer)
         {
-            if (transferClient == null)
-            {
-                return;
-            }
-
-            var keyValuePair = Transfers.Single(i => i.Value.Id == id);
-            var queue = keyValuePair.Value.Queue;
+            var queue = transfer.Queue;
             queue.Client.StopTransfer(queue);
 
             progressOverall = 0;
         }
 
-        private bool CanExecuteStopTransfer(string id)
+        private bool CanExecuteStopTransfer(Transfer transfer)
         {
             return true;
         }
@@ -419,9 +417,12 @@ namespace DNDinventory.ViewModel
                 {
                     outputFolder = fbd.SelectedPath;
 
-                    if (transferClient!=null)
+                    if (transferClients.Count > 0)
                     {
-                        transferClient.OutputFolder = outputFolder;
+                        foreach (var client in transferClients)
+                        {
+                            client.OutputFolder = outputFolder;
+                        }
                     }
 
                     SetFolderOutputTxt = outputFolder;
@@ -560,24 +561,32 @@ namespace DNDinventory.ViewModel
 
         private void connectCallback(object sender, string error)
         {
-            if (error!=null)
+            if (sender is TransferClient)
             {
-                transferClient.Close();
-                transferClient = null;
-                ConnectionStatus = error;
-                return;
-            }
+                var transferClient = sender as TransferClient;
 
-            registerEvents();
-            transferClient.OutputFolder = outputFolder;
-            transferClient.Run();
-            ConnectionStatus = transferClient.EndPoint.Address.ToString();
-            timerOverallProgress.Start();
-            ConnectText = "Disconnect";
+                if (error != null)
+                {
+                    foreach (var client in transferClients)
+                    {
+                        client.Close();
+                    }
+                    transferClients.Clear();
+                    ConnectionStatus = error;
+                    return;
+                }
+
+                registerEvents(transferClient);
+                transferClient.OutputFolder = outputFolder;
+                transferClient.Run();
+                ConnectionStatus = transferClient.EndPoint.Address.ToString();
+                timerOverallProgress.Start();
+                ConnectText = "Disconnect";
+            }
 
         }
 
-        private void registerEvents()
+        private void registerEvents(TransferClient transferClient)
         {
             transferClient.Complete += TransferClient_Complete;
             transferClient.Disconnected += TransferClient_Disconnected;
@@ -589,84 +598,141 @@ namespace DNDinventory.ViewModel
 
         private void TransferClient_Stopped(object sender, TransferQueue queue)
         {
-            var keyValuePair = Transfers.Single(i => i.Value.Id == queue.Id.ToString());
+            var keyValuePair = Transfers.ToList().Single(i => i.Value.Id == queue.Id.ToString());
             keyValuePair.Value.State = TransferState.Stopped;
             
-            if (transferClient == null)
+            if (transferClients.Count <= 0)
             {
                 return;
             }
 
-            ProgressOverall = transferClient.GetOverallProgress();
+            int progress = 0;
+
+            foreach (var client in transferClients)
+            {
+                progress += client.GetOverallProgress();
+            }
+
+            ProgressOverall = progress / transferClients.Count;
         }
 
         private void TransferClient_Paused(object sender, TransferQueue queue)
         {
-            var transfer = Transfers.Single(i => i.Value.Id == queue.Id.ToString()).Value;
+            var transfer = Transfers.ToList().Single(i => i.Value.Id == queue.Id.ToString()).Value;
             transfer.State = (transfer.State == TransferState.Paused ? TransferState.Running : TransferState.Paused);
         }
 
         private void TransferClient_Queued(object sender, TransferQueue queue)
         {
-            Transfer transfer = new Transfer
+            if (sender is TransferClient)
             {
-                Id = queue.Id.ToString(),
-                FileName = queue.Filename,
-                Type = (queue.Type == QueueType.Download ? "Download" : "Upload"),
-                Progress = "0%",
-                Queue = queue,
-                State = TransferState.Running
-            };
-            AddTransfer(transfer);
+                var transferClient = sender as TransferClient;
 
-            if (queue.Type==QueueType.Download)
-            {
-                transferClient.StartTransfer(queue);
+                Transfer transfer = new Transfer
+                {
+                    Id = queue.Id.ToString(),
+                    FileName = queue.Filename,
+                    Type = (queue.Type == QueueType.Download ? "Download" : "Upload"),
+                    Progress = "0%",
+                    Queue = queue,
+                    State = TransferState.Running
+                };
+                AddTransfer(transfer);
+
+                if (queue.Type == QueueType.Download)
+                {
+                    transferClient.StartTransfer(queue);
+                }
             }
         }
 
         private void TransferClient_ProgressChanged(object sender, TransferQueue queue)
         {
-            var keyValuePair = Transfers.Single(i => i.Value.Id == queue.Id.ToString());
-            keyValuePair.Value.Progress = $"{queue.Progress}%";
+            try
+            {
+                List<KeyValuePair<string, Transfer>> tmp = new List<KeyValuePair<string, Transfer>>(Transfers);
+                foreach (var item in tmp)
+                {
+                    if (item.Value.Id == queue.Id.ToString())
+                    {
+                        item.Value.Progress = $"{queue.Progress}%";
+                        break;
+                    }
+                }
+            }
+            catch(Exception)
+            { }
         }
 
         private void TransferClient_Disconnected(object sender, EventArgs e)
         {
-            deregisterEvents();
-
-            foreach (var item in Transfers)
+            if (sender is TransferClient)
             {
-                var queue = item.Value.Queue;
-                queue.Close();
-            }
+                var transferClient = sender as TransferClient;
 
-            App.Current.Dispatcher.Invoke((Action)delegate // <--- HERE
-            {
-                Transfers.Clear();
-            });
-            ProgressOverall = 0;
+                deregisterEvents(transferClient);
 
-            transferClient = null;
-            ConnectionStatus = "No connection";
+                int progress = 0;
+                foreach (var item in Transfers.ToList())
+                {
+                    var queue = item.Value.Queue;
+                    if (queue.Client == transferClient)
+                    {
+                        queue.Close();
 
-            if (serverRunning)
-            {
-                listener.Start(int.Parse(Port.Trim()));
-                ConnectionStatus = "Waiting...";
-            }
-            else
-            {
-                ConnectText = "Connect";
+                        App.Current.Dispatcher.Invoke((Action)delegate // <--- HERE
+                        {
+                            Transfers.Remove(item);
+                        });
+                    }
+                    else
+                    {
+                        progress += queue.Progress;
+                    }
+                }
+
+                ProgressOverall = progress / Transfers.Count;
+
+                transferClients.Remove(transferClient);
+                ConnectionStatus = "No connection";
+
+                if (serverRunning)
+                {
+                    listener.Start(int.Parse(Port.Trim()));
+                    ConnectionStatus = "Waiting...";
+                }
+                else
+                {
+                    ConnectText = "Connect";
+                }
             }
         }
 
         private void TransferClient_Complete(object sender, TransferQueue queue)
         {
-            Transfers.Single(i => i.Value.Id == queue.Id.ToString()).Value.State = TransferState.Completed;
+            List<KeyValuePair<string, Transfer>> tmp = new List<KeyValuePair<string, Transfer>>(Transfers);
+            foreach (var item in tmp)
+            {
+                if (item.Value.Id == queue.Id.ToString())
+                {
+                    item.Value.State = TransferState.Completed;
+
+                    if (serverRunning && !queue.SelfCreated)
+                    {
+                        foreach (var client in transferClients)
+                        {
+                            if(client != (sender as TransferClient))
+                            {
+                                client.QueueTransfer(Path.Combine(outputFolder,queue.Filename));
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
-        private void deregisterEvents()
+        private void deregisterEvents(TransferClient transferClient)
         {
             if(transferClient == null)
             {
@@ -682,6 +748,7 @@ namespace DNDinventory.ViewModel
 
         public MainViewModel()
         {
+            transferClients = new List<TransferClient>();
             hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
@@ -705,8 +772,10 @@ namespace DNDinventory.ViewModel
 
         public void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            deregisterEvents();
-            Properties.Settings.Default.Save();
+            foreach (var client in transferClients)
+            {
+                deregisterEvents(client);
+            }
         }
 
         private void initDefaults()
@@ -726,22 +795,26 @@ namespace DNDinventory.ViewModel
 
         private void TimerOverallProgress_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (transferClient == null)
+            if (transferClients.Count <= 0)
             {
                 return;
             }
 
-            ProgressOverall = transferClient.GetOverallProgress();
+            int progress = 0;
+            foreach (var client in transferClients)
+            {
+                progress += client.GetOverallProgress();
+            }
+            ProgressOverall = progress / transferClients.Count;
         }
 
         private void Listener_Accepted(object sender, SocketAcceptedEventArgs e)
         {
-            listener.Stop();
-
-            transferClient = new TransferClient(e.Accepted);
+            var transferClient = new TransferClient(e.Accepted);
+            transferClients.Add(transferClient);
             transferClient.OutputFolder = outputFolder;
 
-            registerEvents();
+            registerEvents(transferClient);
             transferClient.Run();
             timerOverallProgress.Start();
             ConnectionStatus = transferClient.EndPoint.Address.ToString();

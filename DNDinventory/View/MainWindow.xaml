@@ -34,8 +34,15 @@
                 </StackPanel>
                 <MenuItem Header="{Binding ConnectText}" Command="{Binding ConnectCommand}"/>
             </MenuItem>
-            <MenuItem Header="Settings">
+            <MenuItem Header="Settings" Click="MenuItem_Click">
                 <MenuItem Header="{Binding SetFolderOutputTxt}" Command="{Binding SetOutputFolderCommand}"/>
+                <Separator HorizontalAlignment="Left" Height="1" Width="138"/>
+                <MenuItem Header="Save" Command="{Binding SaveSettingsCommand}"/>
+                <MenuItem Header="Load" Command="{Binding LoadSettingsCommand}"/>
+                <Separator HorizontalAlignment="Left" Height="1" Width="138"/>
+                <MenuItem Header="{Binding SettingsFileLocationTxt}" IsEnabled="false"/>
+                <MenuItem Header="Quicksave" Command="{Binding QuickSaveSettingsCommand}"/>
+                <MenuItem Header="Quickload" Command="{Binding QuickLoadSettingsCommand}"/>
             </MenuItem>
         </Menu>
         <Grid Grid.Row="1">

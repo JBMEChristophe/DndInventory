@@ -36,6 +36,13 @@
             </MenuItem>
             <MenuItem Header="Settings">
                 <MenuItem Header="{Binding SetFolderOutputTxt}" Command="{Binding SetOutputFolderCommand}"/>
+                <Separator/>
+                <MenuItem Header="Save" Command="{Binding SaveSettingsCommand}"/>
+                <MenuItem Header="Load" Command="{Binding LoadSettingsCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Binding SettingsFileLocationTxt}" IsEnabled="false"/>
+                <MenuItem Header="Quicksave" Command="{Binding QuickSaveSettingsCommand}"/>
+                <MenuItem Header="Quickload" Command="{Binding QuickLoadSettingsCommand}"/>
             </MenuItem>
         </Menu>
         <Grid Grid.Row="1">

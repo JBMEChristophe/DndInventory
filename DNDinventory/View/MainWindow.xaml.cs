@@ -31,9 +31,5 @@ namespace DNDinventory.View
 
             Closing += _viewModel.OnWindowClosing;
         }
-
-        private void MenuItem_Click (object sender, RoutedEventArgs e) {
-
-        }
     }
 }

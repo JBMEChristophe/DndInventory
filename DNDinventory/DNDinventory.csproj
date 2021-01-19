@@ -81,7 +81,9 @@
     <Compile Include="SocketFileTransfer\TransferQueue.cs" />
     <Compile Include="Model\Transfer.cs" />
     <Compile Include="TaskUtilities.cs" />
+    <Compile Include="UpdatePolicy.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
+    <Compile Include="XmlHelper.cs" />
     <Compile Include="XmlReader.cs" />
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

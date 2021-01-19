@@ -20,6 +20,8 @@ namespace DNDinventory.ViewModel
 {
     class MainViewModel : INotifyPropertyChanged
     {
+        private const string version = "0.1.0";
+
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
@@ -35,6 +37,14 @@ namespace DNDinventory.ViewModel
             get
             {
                 return hub;
+            }
+        }
+
+        public string Version
+        {
+            get
+            {
+                return version;
             }
         }
 

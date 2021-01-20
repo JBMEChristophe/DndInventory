@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace InventoryControlLib
 {
@@ -16,7 +17,7 @@ namespace InventoryControlLib
 
     class UpdateGrid
     {
-        public Point ScreenPoint { get; set; }
+        public Grid Grid { get; set; }
         public Size Size { get; set; }
         public Size CellSize { get; set; }
     }

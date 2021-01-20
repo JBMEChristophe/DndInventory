@@ -69,7 +69,7 @@ namespace InventoryControlLib
                 {
                     Grid = new UpdateGrid
                     {
-                        ScreenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow),
+                        Grid = Inventory,
                         CellSize = new Size(CellWidth, CellHeight),
                         Size = new Size(Columns * CellWidth, Rows * CellHeight)
                     }

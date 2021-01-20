@@ -285,7 +285,7 @@ namespace InventoryControlLib.View
                 {
                     model.Quantity = value;
                     OnPropertyChange("Quantity");
-                    splitCommand.RaiseCanExecuteChanged();
+                    splitCommand?.RaiseCanExecuteChanged();
                 }
             }
         }

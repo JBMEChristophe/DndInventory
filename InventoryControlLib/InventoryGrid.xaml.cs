@@ -59,8 +59,6 @@ namespace InventoryControlLib
                         Inventory.Children.Add(border);
                     }
                 }
-                Width = Inventory.Width;
-                Height = Inventory.Height;
 
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);

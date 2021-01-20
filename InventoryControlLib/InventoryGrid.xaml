@@ -6,8 +6,11 @@
              xmlns:local="clr-namespace:InventoryControlLib"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <GroupBox Header="{Binding Name}" Margin="10" Padding="10">
-        <Grid x:Name="Inventory" local:GridHelpers.ColumnCount="{Binding Columns}" local:GridHelpers.RowCount="{Binding Rows}">
+    <GroupBox x:Name="gb" Header="{Binding Name}" Margin="10" Padding="10">
+        <Grid>
+            <Image HorizontalAlignment="Left" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=Inventory}" Height="{Binding ActualHeight, ElementName=Inventory}" Source="https://static.wikia.nocookie.net/metro2033/images/c/cd/ME_Render_Backpack.png/revision/latest/scale-to-width-down/340?cb=20190813173530"/>
+            <Grid x:Name="Inventory" HorizontalAlignment="Left" VerticalAlignment="Top" local:GridHelpers.ColumnCount="{Binding Columns}" local:GridHelpers.RowCount="{Binding Rows}">
+            </Grid>
         </Grid>
     </GroupBox>
 </UserControl>

@@ -48,8 +48,8 @@ namespace InventoryControlLib
                     {
                         Border border = new Border
                         {
-                            Background = Brushes.LightGray,
-                            BorderBrush = Brushes.Black,
+                            Background = new SolidColorBrush(Color.FromArgb(64,0,0,0)),
+                            BorderBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                             BorderThickness = new Thickness(0.75),
                             Width = CellWidth,
                             Height = CellHeight,

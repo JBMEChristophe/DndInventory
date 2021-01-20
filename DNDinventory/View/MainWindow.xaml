@@ -91,7 +91,7 @@
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="ID" Width="120" DisplayMemberBinding="{Binding Key}" />
-                            <GridViewColumn Header="Filename" Width="50" DisplayMemberBinding="{Binding Value.Filename}" />
+                            <GridViewColumn Header="Filename" Width="Auto" DisplayMemberBinding="{Binding Value.Filename}" />
                             <GridViewColumn Header="Type" Width="150" DisplayMemberBinding="{Binding Value.Type}" />
                             <GridViewColumn Header="Progress" Width="150" DisplayMemberBinding="{Binding Value.Progress}" />
                             <GridViewColumn>

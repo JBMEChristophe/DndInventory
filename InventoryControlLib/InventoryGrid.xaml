@@ -6,6 +6,8 @@
              xmlns:local="clr-namespace:InventoryControlLib"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid x:Name="Inventory" local:GridHelpers.ColumnCount="{Binding Columns}" local:GridHelpers.RowCount="{Binding Rows}">
-    </Grid>
+    <GroupBox Header="{Binding Name}" Margin="10" Padding="10">
+        <Grid x:Name="Inventory" local:GridHelpers.ColumnCount="{Binding Columns}" local:GridHelpers.RowCount="{Binding Rows}">
+        </Grid>
+    </GroupBox>
 </UserControl>

@@ -35,10 +35,8 @@ namespace InventoryControlLib
             InitializeComponent();
         }
 
-        public override void EndInit()
+        public void Init()
         {
-            base.EndInit();
-
             if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
             {
                 manager = GridManager.Instance;
@@ -61,6 +59,8 @@ namespace InventoryControlLib
                         Inventory.Children.Add(border);
                     }
                 }
+                Width = Inventory.Width;
+                Height = Inventory.Height;
 
                 hub = MessageHub;
                 subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
@@ -75,9 +75,10 @@ namespace InventoryControlLib
                     }
                 });
 
-                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true , quantity: 5);
+                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true, quantity: 5);
                 AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
-                AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX:3);
+                AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX: 3);
+                AddItem(3, 2, 1, "https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png", isStackable: true, quantity: 10);
             }
         }
 
@@ -188,7 +189,7 @@ namespace InventoryControlLib
 
             var width = Columns * CellWidth;
             var height = Rows * CellHeight;
-            var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+            var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
             if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
                 && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)

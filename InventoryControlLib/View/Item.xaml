@@ -7,6 +7,7 @@
              MouseLeftButtonDown="UserControl_MouseLeftButtonDown"
              MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
              MouseMove="UserControl_MouseMove"
+             MouseWheel="UserControl_MouseWheel"
              d:DesignHeight="50" d:DesignWidth="50"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <UserControl.Resources>

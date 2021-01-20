@@ -192,10 +192,22 @@ namespace InventoryControlLib
             if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
                 && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
             {
-                var cellX = (int)Math.Floor((releasePoint.X - screenPoint.X) / CellWidth);
-                var cellY = (int)Math.Floor((releasePoint.Y - screenPoint.Y) / CellHeight);
-                var x = cellX * CellWidth + screenPoint.X;
-                var y = cellY * CellHeight + screenPoint.Y;
+                var cellX = (releasePoint.X - screenPoint.X) / CellWidth;
+                var cellY = (releasePoint.Y - screenPoint.Y) / CellHeight;
+                var icellX = (int)Math.Floor(cellX);
+                var icellY = (int)Math.Floor(cellY);
+
+                if (cellX % 1 > 0.6)
+                {
+                    icellX++;
+                }
+                if (cellY % 1 > 0.6)
+                {
+                    icellY++;
+                }
+
+                var x = icellX * CellWidth + screenPoint.X;
+                var y = icellY * CellHeight + screenPoint.Y;
 
                 bool cancelMove = false;
                 bool stacked = false;
@@ -208,7 +220,7 @@ namespace InventoryControlLib
                         { 
                             continue;
                         }
-                        if (gridCellsOccupied(cellX, cellY, item.ColumnSpan, item.RowSpan, curItem))
+                        if (gridCellsOccupied(icellX, icellY, item.ColumnSpan, item.RowSpan, curItem))
                         {
                             if(item.ID == curItem.ID && item.IsStackable)
                             {
@@ -221,7 +233,7 @@ namespace InventoryControlLib
                         }
                     }
                 }
-                if (!IsWithinGridBoundary(cellX, cellY, item.ColumnSpan, item.RowSpan))
+                if (!IsWithinGridBoundary(icellX, icellY, item.ColumnSpan, item.RowSpan))
                 {
                     cancelMove = true;
                 }
@@ -250,8 +262,8 @@ namespace InventoryControlLib
                         item.ItemSplitClicked += Item_SplitClicked;
                         Inventory.Children.Add(item);
                         item.GridParent = Inventory;
-                        item.Column = cellX;
-                        item.Row = cellY;
+                        item.Column = icellX;
+                        item.Row = icellY;
                         item.Transform(p);
                     }
                 }

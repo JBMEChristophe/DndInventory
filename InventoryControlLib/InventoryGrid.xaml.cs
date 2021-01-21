@@ -35,10 +35,8 @@ namespace InventoryControlLib
             InitializeComponent();
         }
 
-        public override void EndInit()
+        public void Init()
         {
-            base.EndInit();
-
             if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
             {
                 manager = GridManager.Instance;
@@ -50,8 +48,8 @@ namespace InventoryControlLib
                     {
                         Border border = new Border
                         {
-                            Background = Brushes.LightGray,
-                            BorderBrush = Brushes.Black,
+                            Background = new SolidColorBrush(Color.FromArgb(64,0,0,0)),
+                            BorderBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                             BorderThickness = new Thickness(0.75),
                             Width = CellWidth,
                             Height = CellHeight,
@@ -69,15 +67,16 @@ namespace InventoryControlLib
                 {
                     Grid = new UpdateGrid
                     {
-                        ScreenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow),
+                        Grid = Inventory,
                         CellSize = new Size(CellWidth, CellHeight),
                         Size = new Size(Columns * CellWidth, Rows * CellHeight)
                     }
                 });
 
-                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true , quantity: 5);
+                AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true, quantity: 5);
                 AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
-                AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX:3);
+                AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX: 3);
+                AddItem(3, 2, 1, "https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png", isStackable: true, quantity: 10);
             }
         }
 
@@ -188,15 +187,27 @@ namespace InventoryControlLib
 
             var width = Columns * CellWidth;
             var height = Rows * CellHeight;
-            var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+            var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
             if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
                 && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
             {
-                var cellX = (int)Math.Floor((releasePoint.X - screenPoint.X) / CellWidth);
-                var cellY = (int)Math.Floor((releasePoint.Y - screenPoint.Y) / CellHeight);
-                var x = cellX * CellWidth + screenPoint.X;
-                var y = cellY * CellHeight + screenPoint.Y;
+                var cellX = (releasePoint.X - screenPoint.X) / CellWidth;
+                var cellY = (releasePoint.Y - screenPoint.Y) / CellHeight;
+                var icellX = (int)Math.Floor(cellX);
+                var icellY = (int)Math.Floor(cellY);
+
+                if (cellX % 1 > 0.6)
+                {
+                    icellX++;
+                }
+                if (cellY % 1 > 0.6)
+                {
+                    icellY++;
+                }
+
+                var x = icellX * CellWidth + screenPoint.X;
+                var y = icellY * CellHeight + screenPoint.Y;
 
                 bool cancelMove = false;
                 bool stacked = false;
@@ -209,7 +220,7 @@ namespace InventoryControlLib
                         { 
                             continue;
                         }
-                        if (gridCellsOccupied(cellX, cellY, item.ColumnSpan, item.RowSpan, curItem))
+                        if (gridCellsOccupied(icellX, icellY, item.ColumnSpan, item.RowSpan, curItem))
                         {
                             if(item.ID == curItem.ID && item.IsStackable)
                             {
@@ -222,7 +233,7 @@ namespace InventoryControlLib
                         }
                     }
                 }
-                if (!IsWithinGridBoundary(cellX, cellY, item.ColumnSpan, item.RowSpan))
+                if (!IsWithinGridBoundary(icellX, icellY, item.ColumnSpan, item.RowSpan))
                 {
                     cancelMove = true;
                 }
@@ -251,8 +262,8 @@ namespace InventoryControlLib
                         item.ItemSplitClicked += Item_SplitClicked;
                         Inventory.Children.Add(item);
                         item.GridParent = Inventory;
-                        item.Column = cellX;
-                        item.Row = cellY;
+                        item.Column = icellX;
+                        item.Row = icellY;
                         item.Transform(p);
                     }
                 }

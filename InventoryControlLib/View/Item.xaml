@@ -7,13 +7,18 @@
              MouseLeftButtonDown="UserControl_MouseLeftButtonDown"
              MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
              MouseMove="UserControl_MouseMove"
+             MouseWheel="UserControl_MouseWheel"
              d:DesignHeight="50" d:DesignWidth="50"
              DataContext="{Binding RelativeSource={RelativeSource Self}}">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
     </UserControl.Resources>
     <Grid>
-        <Border BorderThickness="2" BorderBrush="Black" Background="LightGray" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
+        <Border CornerRadius="5" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}">
+            <Border.Background>
+                <SolidColorBrush Color="Gray" Opacity="0.5" />
+            </Border.Background>
+        </Border>
         <Image Source="{Binding Image}" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
         <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding IsQuantityVisible, Converter={StaticResource VisibleIfTrueConverter}}" >
             <Label Content="{Binding Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>

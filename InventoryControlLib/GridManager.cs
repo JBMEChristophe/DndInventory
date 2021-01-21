@@ -53,7 +53,7 @@ namespace InventoryControlLib
 
                 var width = grid.Size.Width;
                 var height = grid.Size.Height;
-                var screenPoint = grid.ScreenPoint;
+                var screenPoint = grid.Grid.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
                 if (!(releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
                     && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y))

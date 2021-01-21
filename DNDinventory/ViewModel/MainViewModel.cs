@@ -15,11 +15,15 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.Collections.ObjectModel;
 using Easy.MessageHub;
+using System.Windows.Controls;
+using System.Windows;
 
 namespace DNDinventory.ViewModel
 {
     class MainViewModel : INotifyPropertyChanged
     {
+        private const string version = "0.1.0";
+
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
@@ -30,11 +34,60 @@ namespace DNDinventory.ViewModel
 
         private bool serverRunning;
 
+        private void AddInventory(string name, Size size)
+        {
+            var inv = new InventoryControlLib.InventoryGrid()
+            {
+                Columns = (int)size.Width,
+                Rows = (int)size.Height,
+                MessageHub = Hub,
+                Name = name
+            };
+            inv.Init();
+
+            InventoryContent.Children.Add(inv);
+            OnPropertyChange("InventoryContent");
+        }
+
+        private void setupInv()
+        {
+            string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
+            int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
+            for (int i = 0; i < test.Length; i++)
+            {
+                AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
+            }
+        }
+
+        private StackPanel inventoryContent;
+        public StackPanel InventoryContent
+        {
+            get
+            {
+                if(inventoryContent == null)
+                {
+                    inventoryContent = new StackPanel();
+                    inventoryContent.HorizontalAlignment = HorizontalAlignment.Left;
+                    inventoryContent.VerticalAlignment = VerticalAlignment.Top;
+                    inventoryContent.Orientation = Orientation.Horizontal;
+                }
+                return inventoryContent;
+            }
+        }
+
         public IMessageHub Hub
         {
             get
             {
                 return hub;
+            }
+        }
+
+        public string Version
+        {
+            get
+            {
+                return version;
             }
         }
 
@@ -744,6 +797,8 @@ namespace DNDinventory.ViewModel
             {
                 Directory.CreateDirectory(outputFolder);
             }
+
+            setupInv();
         }
 
         public void OnWindowClosing(object sender, CancelEventArgs e)

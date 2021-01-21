@@ -107,7 +107,6 @@ namespace InventoryControlLib.ViewModel
             {
                 if (SplitClicked != null && SplitClicked(item, Value))
                 {
-
                     MinValue = (item.Quantity > 1) ? 1 : 0;
                     MaxValue = item.Quantity - 1;
                     Value = (Value < MaxValue) ? Value : MaxValue;

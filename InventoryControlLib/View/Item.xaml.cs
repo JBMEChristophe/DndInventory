@@ -31,7 +31,6 @@ namespace InventoryControlLib.View
         Grid parent;
         ItemModel model;
 
-        Point anchorPoint;
         Point currentPoint;
         Point startingPoint;
         bool isInDrag = false;
@@ -286,6 +285,7 @@ namespace InventoryControlLib.View
                 {
                     model.Quantity = value;
                     OnPropertyChange("Quantity");
+                    splitCommand?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -325,7 +325,7 @@ namespace InventoryControlLib.View
             {
                 if (splitCommand == null)
                 {
-                    splitCommand = new DelegateCommand(ExecuteSplit);
+                    splitCommand = new DelegateCommand(ExecuteSplit, CanExecuteSplit);
                 }
                 return splitCommand;
             }
@@ -334,6 +334,11 @@ namespace InventoryControlLib.View
         private void ExecuteSplit()
         {
             ItemSplitClicked?.Invoke(this);
+        }
+
+        private bool CanExecuteSplit()
+        {
+            return model.Quantity > 1;
         }
 
         public void RemoveEvents()
@@ -354,12 +359,11 @@ namespace InventoryControlLib.View
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var element = sender as FrameworkElement;
-            startingPoint = e.GetPosition(null);
-            anchorPoint = startingPoint;
+            startingPoint = e.GetPosition(this);
             element.CaptureMouse();
             isInDrag = true;
             e.Handled = true;
-            MousePressed?.Invoke(this, startingPoint);
+            MousePressed?.Invoke(this, e.GetPosition(null));
         }
 
         private void UserControl_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -370,8 +374,7 @@ namespace InventoryControlLib.View
                 element.ReleaseMouseCapture();
                 isInDrag = false;
                 e.Handled = true;
-                currentPoint = e.GetPosition(null);
-                MouseReleased?.Invoke(this, currentPoint);
+                MouseReleased?.Invoke(this, e.GetPosition(null));
                 var itemPosition = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
                 hub.Publish(new ItemPositionUpdate { Item = this, Position = itemPosition });
             }
@@ -381,16 +384,12 @@ namespace InventoryControlLib.View
         {
             if (isInDrag)
             {
-                var element = sender as FrameworkElement;
                 currentPoint = e.GetPosition(null);
 
                 if (currentPoint.X < Application.Current.MainWindow.RenderSize.Width && currentPoint.Y < Application.Current.MainWindow.RenderSize.Height
                     && currentPoint.X > 0 && currentPoint.Y > 0)
                 {
-                    transform.X += (currentPoint.X - anchorPoint.X);
-                    transform.Y += (currentPoint.Y - anchorPoint.Y);
-                    this.RenderTransform = transform;
-                    anchorPoint = currentPoint;
+                    correctItemOnMousePos();
                 }
                 else
                 {
@@ -413,6 +412,25 @@ namespace InventoryControlLib.View
                     }
                     this.RenderTransform = transform;
                 }
+            }
+        }
+
+        private void UserControl_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (isInDrag)
+            {
+                correctItemOnMousePos();
+            }
+        }
+
+        private void correctItemOnMousePos()
+        {
+            if (isInDrag)
+            {
+                var currentPointDiff = Mouse.GetPosition(this);
+                transform.X += currentPointDiff.X - startingPoint.X;
+                transform.Y += currentPointDiff.Y - startingPoint.Y;
+                this.RenderTransform = transform;
             }
         }
 

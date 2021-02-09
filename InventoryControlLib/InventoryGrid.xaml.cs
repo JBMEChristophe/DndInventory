@@ -24,6 +24,8 @@ namespace InventoryControlLib
     /// </summary>
     public partial class InventoryGrid : UserControl
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private IMessageHub hub;
         private Guid subscriptionToken;
 
@@ -37,6 +39,7 @@ namespace InventoryControlLib
 
         public void Init()
         {
+            logger.Info($"> Init()");
             if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
             {
                 manager = GridManager.Instance;
@@ -78,10 +81,12 @@ namespace InventoryControlLib
                 AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX: 3);
                 AddItem(3, 2, 1, "https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png", isStackable: true, quantity: 10);
             }
+            logger.Info($"< Init()");
         }
 
         private void AddItem(int id, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
         {
+            logger.Info($"> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
             Item item = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(id, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
@@ -90,7 +95,8 @@ namespace InventoryControlLib
             item.MouseReleased += Item_MouseReleased;
             item.MousePressed += Item_MousePressed;
             item.ItemSplitClicked += Item_SplitClicked;
-            Inventory.Children.Add(item);
+            Inventory.Children.Add(item); 
+            logger.Info($"< AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
         }
 
         private void AddItem(ItemModel item, int x, int y, int quantity)
@@ -100,6 +106,7 @@ namespace InventoryControlLib
 
         private Point? NextAvailableCell(int spanX, int spanY)
         {
+            logger.Info($"> NextAvailableCell(spanX: {spanX}, spanY: {spanY})");
             for (int y = 0; y < Inventory.RowDefinitions.Count; y++)
             {
                 for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
@@ -119,16 +126,20 @@ namespace InventoryControlLib
 
                     if(cellAvailable)
                     {
-                        return new Point(x, y);
+                        var point = new Point(x, y);
+                        logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return({point})");
+                        return point;
                     }
                 }
             }
 
+            logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return(null)");
             return null;
         }
 
         private void Item_MousePressed(object sender, Point mousePosition)
         {
+            logger.Trace($">< Item_MousePressed(sender: {sender}, mousePosition: {mousePosition})");
             if (sender is Item)
             {
                 var item = sender as Item;
@@ -138,6 +149,7 @@ namespace InventoryControlLib
         }
         private void Item_SplitClicked(object sender)
         {
+            logger.Debug($"> Item_SplitClicked(sender: {sender})");
             if (sender is Item)
             {
                 var item = sender as Item;
@@ -146,42 +158,53 @@ namespace InventoryControlLib
                 ItemSplitWindow detailWindow = new ItemSplitWindow(viewModel);
                 detailWindow.ShowDialog();
             }
+            logger.Debug($"< Item_SplitClicked(sender: {sender})");
         }
 
         private bool ItemDetailViewModel_SplitClicked(ItemModel sender, int value)
         {
+            logger.Debug($"> ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value})");
             var cell = NextAvailableCell(sender.CellSpanX, sender.CellSpanY);
             if (cell.HasValue)
             {
                 AddItem(sender, (int)cell.Value.X, (int)cell.Value.Y, value);
                 sender.Parent.Quantity -= value;
+                logger.Debug($"< ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value}).return(True)");
                 return true;
             }
+            logger.Debug($"< ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value}).return(False)");
             return false;
         }
 
         private bool gridCellsOccupied(int newX, int newY, int spanX, int spanY, Item i2)
         {
+            logger.Debug($"> gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}])");
             var i1Start = new Point(newX, newY);
             var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
             var i2Start = new Point(i2.Column, i2.Row);
             var i2End = new Point(i2.Column + i2.ColumnSpan - 1, i2.Row + i2.RowSpan - 1);
 
-            return (i2End.X >= i1Start.X && i2Start.X <= i1End.X) && (i2End.Y >= i1Start.Y && i2Start.Y <= i1End.Y);
+            var result = (i2End.X >= i1Start.X && i2Start.X <= i1End.X) && (i2End.Y >= i1Start.Y && i2Start.Y <= i1End.Y);
+            logger.Debug($"< gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}]).return({result})");
+            return result;
         }
 
         private bool IsWithinGridBoundary(int newX, int newY, int spanX, int spanY)
         {
+            logger.Debug($"> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY})");
             var i1Start = new Point(newX, newY);
             var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
             var i2Start = new Point(0, 0);
             var i2End = new Point(Inventory.ColumnDefinitions.Count - 1, Inventory.RowDefinitions.Count - 1);
 
-            return (i1Start.X >= i2Start.X && i1End.X <= i2End.X) && (i1Start.Y >= i2Start.Y && i1End.Y <= i2End.Y);
+            var result = (i1Start.X >= i2Start.X && i1End.X <= i2End.X) && (i1Start.Y >= i2Start.Y && i1End.Y <= i2End.Y);
+            logger.Debug($"> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}).reutn({result})");
+            return result;
         }
 
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
+            logger.Debug($"> ItemPositionUpdate(positionUpdate: {positionUpdate})");
             var item = positionUpdate.Item;
             var releasePoint = positionUpdate.Position;
 
@@ -268,10 +291,17 @@ namespace InventoryControlLib
                     }
                 }
             }
+            else
+            {
+                logger.Debug($"Ignored");
+            }
+
+            logger.Debug($"< ItemPositionUpdate(positionUpdate: {positionUpdate})");
         }
 
         private void Item_MouseReleased(object sender, Point mousePosition)
         {
+            logger.Trace($">< Item_MouseReleased(sender: {sender}, mousePosition: {mousePosition})");
             if (sender is Item)
             {
                 var item = sender as Item;

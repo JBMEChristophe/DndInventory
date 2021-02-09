@@ -10,9 +10,11 @@ namespace InventoryControlLib
 {
     public class ItemModel
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public int ID { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
+        public double CellWidth { get; set; }
+        public double CellHeight { get; set; }
         public int CellSpanX { get; set; }
         public int CellSpanY { get; set; }
         public int CellX { get; set; }
@@ -32,16 +34,17 @@ namespace InventoryControlLib
             {
                 imageUri = value;
                 BitMapImage = new BitmapImage(imageUri);
-                BitMapImage.DecodePixelWidth = (int)Math.Floor(Width);
+                BitMapImage.DecodePixelWidth = (int)Math.Floor(CellWidth);
             }
         }
         public BitmapImage BitMapImage { get; set; }
         
         public ItemModel(int id, double width, double height, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, Uri image = null)
         {
+            logger.Debug($"> ItemModel(id: {id}, width: {width}, height: {height}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {image})");
             ID = id;
-            Width = width;
-            Height = height;
+            CellWidth = width;
+            CellHeight = height;
             CellSpanX = spanX;
             CellSpanY = spanY;
             CellX = column;
@@ -50,6 +53,12 @@ namespace InventoryControlLib
             IsStackable = isStackable;
             Image = image;
             BitMapImage = new BitmapImage(image);
+            logger.Debug($"< ItemModel(id: {id}, width: {width}, height: {height}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {image})");
+        }
+
+        public override string ToString()
+        {
+            return $"ID: {ID}, CellSpan: [X: {CellSpanX}, Y: {CellSpanY}], Cell: [X: {CellX}, Y: {CellY}], Quantity: {Quantity}, IsStackable: {IsStackable}";
         }
     }
 }

@@ -23,6 +23,7 @@ namespace DNDinventory.ViewModel
     class MainViewModel : INotifyPropertyChanged
     {
         private const string version = "0.1.0";
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly IMessageHub hub;
         private Listener listener;
@@ -36,6 +37,7 @@ namespace DNDinventory.ViewModel
 
         private void AddInventory(string name, Size size)
         {
+            logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
             var inv = new InventoryControlLib.InventoryGrid()
             {
                 Columns = (int)size.Width,
@@ -47,16 +49,19 @@ namespace DNDinventory.ViewModel
 
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
+            logger.Debug($"< AddInventory({name}, {size})");
         }
 
         private void setupInv()
         {
+            logger.Debug($"> setupInv()");
             string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
             int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
             for (int i = 0; i < test.Length; i++)
             {
                 AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
             }
+            logger.Debug($"< setupInv()");
         }
 
         private StackPanel inventoryContent;
@@ -226,11 +231,13 @@ namespace DNDinventory.ViewModel
 
         private void AddTransfer(Transfer t)
         {
+            logger.Info($"> AddTransfer(transfer: [{t}])");
             App.Current.Dispatcher.Invoke((Action)delegate // <--- HERE
             {
                 Transfers.Add(new KeyValuePair<string, Transfer>(t.Id, t));
                 OnPropertyChange("Transfers");
             });
+            logger.Info($"< AddTransfer(transfer: [{t}])");
         }
 
         DelegateCommand connectCommand;
@@ -248,14 +255,17 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteConnect()
         {
+            logger.Info($"> ExecuteConnect()");
             if (transferClients.Count <= 0)
             {
+                logger.Info($">< ExecuteConnect().Connect");
                 var transferClient = new TransferClient();
                 transferClients.Add(transferClient);
                 transferClient.Connect(Host.Trim(), int.Parse(Port.Trim()), connectCallback);
             }
             else
             {
+                logger.Info($">< ExecuteConnect().Disconnect");
                 foreach (var client in transferClients)
                 {
                     client.Close();
@@ -264,6 +274,7 @@ namespace DNDinventory.ViewModel
             }
 
             sendFileCommand.RaiseCanExecuteChanged();
+            logger.Info($"< ExecuteConnect()");
         }
 
         private bool CanExecuteConnect()
@@ -286,7 +297,8 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteStartServer()
         {
-            if(serverRunning)
+            logger.Info($"> ExecuteStartServer()");
+            if (serverRunning)
             {
                 return;
             }
@@ -300,10 +312,12 @@ namespace DNDinventory.ViewModel
                 stopServerCommand.RaiseCanExecuteChanged();
                 connectCommand?.RaiseCanExecuteChanged();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 ConnectionStatus = $"Unable to listing on port {Port.Trim()}";
+                logger.Warn(ex, ConnectionStatus);
             }
+            logger.Info($"< ExecuteStartServer()");
         }
 
         private bool CanExecuteStartServer()
@@ -326,6 +340,7 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteStopServer()
         {
+            logger.Info($"> ExecuteStopServer()");
             if (!serverRunning)
             {
                 return;
@@ -346,6 +361,7 @@ namespace DNDinventory.ViewModel
             startServerCommand.RaiseCanExecuteChanged();
             stopServerCommand.RaiseCanExecuteChanged();
             connectCommand?.RaiseCanExecuteChanged();
+            logger.Info($"< ExecuteStopServer()");
         }
 
         private bool CanExecuteStopServer()
@@ -368,27 +384,36 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteSendFile()
         {
+            logger.Info($"> ExecuteSendFile()");
             if (transferClients.Count <= 0)
             {
                 return;
             }
 
-            using (WinForms.OpenFileDialog ofd = new WinForms.OpenFileDialog())
+            try
             {
-                ofd.Filter = "All Files (*.*)|*.*";
-                ofd.Multiselect = true;
-
-                if (ofd.ShowDialog() == WinForms.DialogResult.OK)
+                using (WinForms.OpenFileDialog ofd = new WinForms.OpenFileDialog())
                 {
-                    foreach (var file in ofd.FileNames)
+                    ofd.Filter = "All Files (*.*)|*.*";
+                    ofd.Multiselect = true;
+
+                    if (ofd.ShowDialog() == WinForms.DialogResult.OK)
                     {
-                        foreach (var client in transferClients)
+                        foreach (var file in ofd.FileNames)
                         {
-                            client.QueueTransfer(file);
+                            foreach (var client in transferClients)
+                            {
+                                client.QueueTransfer(file);
+                            }
                         }
                     }
                 }
             }
+            catch(Exception ex)
+            {
+                logger.Error(ex, "Something bad happened");
+            }
+            logger.Info($"< ExecuteSendFile()");
         }
 
         private bool CanExecuteSendFile()
@@ -411,8 +436,10 @@ namespace DNDinventory.ViewModel
 
         private void ExecutePauseTransfer(Transfer transfer)
         {
+            logger.Info($"> ExecutePauseTransfer(transfer: [{transfer}])");
             var queue = transfer.Queue;
             queue.Client.PauseTransfer(queue);
+            logger.Info($"< ExecutePauseTransfer(transfer: [{transfer}])");
         }
 
         private bool CanExecutePauseTransfer(Transfer transfer)
@@ -435,10 +462,12 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteStopTransfer(Transfer transfer)
         {
+            logger.Info($"> ExecuteStopTransfer(transfer: [{transfer}])");
             var queue = transfer.Queue;
             queue.Client.StopTransfer(queue);
 
             progressOverall = 0;
+            logger.Info($"< ExecuteStopTransfer(transfer: [{transfer}])");
         }
 
         private bool CanExecuteStopTransfer(Transfer transfer)
@@ -461,6 +490,7 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteSetOutputFolder()
         {
+            logger.Info($">< ExecuteSetOutputFolder()");
             using (WinForms.FolderBrowserDialog fbd = new WinForms.FolderBrowserDialog())
             {
                 fbd.SelectedPath = outputFolder;
@@ -491,7 +521,9 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private void ExecuteSaveSettings () {
+        private void ExecuteSaveSettings () 
+        {
+            logger.Info($"> ExecuteSaveSettings()");
             using (WinForms.SaveFileDialog sfd = new WinForms.SaveFileDialog()) {
                 sfd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
                 sfd.FilterIndex = 1;
@@ -505,6 +537,7 @@ namespace DNDinventory.ViewModel
                     ExecuteQuickSaveSettings();
                 }
             }
+            logger.Info($"< ExecuteSaveSettings()");
         }
 
         DelegateCommand quickSaveSettingsCommand;
@@ -517,9 +550,12 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private void ExecuteQuickSaveSettings () {
+        private void ExecuteQuickSaveSettings ()
+        {
+            logger.Info($"> ExecuteQuickSaveSettings()");
             PrepareSavedSettings();
             settingsFileHandler.WriteToXml(settingsFileLocation);
+            logger.Info($"< ExecuteQuickSaveSettings()");
         }
 
         DelegateCommand loadSettingsCommand;
@@ -532,7 +568,9 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private void ExecuteLoadSettings () {
+        private void ExecuteLoadSettings ()
+        {
+            logger.Info($"> ExecuteLoadSettings()");
             using (WinForms.OpenFileDialog ofd = new WinForms.OpenFileDialog()) {
                 ofd.Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*";
                 ofd.FilterIndex = 1;
@@ -546,6 +584,7 @@ namespace DNDinventory.ViewModel
                     ExecuteQuickLoadSettings();
                 }
             }
+            logger.Info($"< ExecuteLoadSettings()");
         }
 
         DelegateCommand quickLoadSettingsCommand;
@@ -558,10 +597,13 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private void ExecuteQuickLoadSettings () {
+        private void ExecuteQuickLoadSettings ()
+        {
+            logger.Info($"> ExecuteQuickLoadSettings()");
             // Load settings from settingsFileLocation
             settingsFileHandler.ReadFromXml(settingsFileLocation);
             UpdateSavedSettings();
+            logger.Info($"< ExecuteQuickLoadSettings()");
         }
 
         DelegateCommand clearCompletedCommand;
@@ -579,6 +621,7 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteclearCompleted()
         {
+            logger.Info($">< ExecuteclearCompleted()");
             foreach (var item in Transfers.ToList())
             {
                 var queue = item.Value.Queue;
@@ -592,6 +635,7 @@ namespace DNDinventory.ViewModel
 
         private void connectCallback(object sender, string error)
         {
+            logger.Info($"> connectCallback(sender: {sender}, error: {error})");
             if (sender is TransferClient)
             {
                 var transferClient = sender as TransferClient;
@@ -614,21 +658,24 @@ namespace DNDinventory.ViewModel
                 timerOverallProgress.Start();
                 ConnectText = "Disconnect";
             }
-
+            logger.Info($"< connectCallback(sender: {sender}, error: {error})");
         }
 
         private void registerEvents(TransferClient transferClient)
         {
+            logger.Info($"> registerEvents(transferClient: {transferClient})");
             transferClient.Complete += TransferClient_Complete;
             transferClient.Disconnected += TransferClient_Disconnected;
             transferClient.ProgressChanged += TransferClient_ProgressChanged;
             transferClient.Queued += TransferClient_Queued;
             transferClient.Stopped += TransferClient_Stopped;
             transferClient.Paused += TransferClient_Paused;
+            logger.Info($"< registerEvents(transferClient: {transferClient})");
         }
 
         private void TransferClient_Stopped(object sender, TransferQueue queue)
         {
+            logger.Info($"> TransferClient_Stopped(sender: {sender}, queue: [{queue}])");
             var keyValuePair = Transfers.ToList().Single(i => i.Value.Id == queue.Id.ToString());
             keyValuePair.Value.State = TransferState.Stopped;
             
@@ -645,16 +692,20 @@ namespace DNDinventory.ViewModel
             }
 
             ProgressOverall = progress / transferClients.Count;
+            logger.Info($"< TransferClient_Stopped(sender: {sender}, queue: [{queue}])");
         }
 
         private void TransferClient_Paused(object sender, TransferQueue queue)
         {
+            logger.Info($"> TransferClient_Paused(sender: {sender}, queue: [{queue}])");
             var transfer = Transfers.ToList().Single(i => i.Value.Id == queue.Id.ToString()).Value;
             transfer.State = (transfer.State == TransferState.Paused ? TransferState.Running : TransferState.Paused);
+            logger.Info($"< TransferClient_Paused(sender: {sender}, queue: [{queue}])");
         }
 
         private void TransferClient_Queued(object sender, TransferQueue queue)
         {
+            logger.Info($"> TransferClient_Queued(sender: {sender}, queue: [{queue}])");
             if (sender is TransferClient)
             {
                 var transferClient = sender as TransferClient;
@@ -675,10 +726,12 @@ namespace DNDinventory.ViewModel
                     transferClient.StartTransfer(queue);
                 }
             }
+            logger.Info($"< TransferClient_Queued(sender: {sender}, queue: [{queue}])");
         }
 
         private void TransferClient_ProgressChanged(object sender, TransferQueue queue)
         {
+            logger.Trace($"> TransferClient_ProgressChanged(sender: {sender}, queue: [{queue}])");
             try
             {
                 List<KeyValuePair<string, Transfer>> tmp = new List<KeyValuePair<string, Transfer>>(Transfers);
@@ -691,12 +744,16 @@ namespace DNDinventory.ViewModel
                     }
                 }
             }
-            catch(Exception)
-            { }
+            catch(Exception ex)
+            {
+                logger.Error(ex, $"Something bad happened");
+            }
+            logger.Trace($"< TransferClient_ProgressChanged(sender: {sender}, queue: [{queue}])");
         }
 
         private void TransferClient_Disconnected(object sender, EventArgs e)
         {
+            logger.Info($"> TransferClient_Disconnected(sender: {sender}, EventArgs: {e})");
             if (sender is TransferClient)
             {
                 var transferClient = sender as TransferClient;
@@ -737,10 +794,12 @@ namespace DNDinventory.ViewModel
                     ConnectText = "Connect";
                 }
             }
+            logger.Info($"< TransferClient_Disconnected(sender: {sender}, EventArgs: {e})");
         }
 
         private void TransferClient_Complete(object sender, TransferQueue queue)
         {
+            logger.Info($"> TransferClient_Complete(sender: {sender}, queue: [{queue}])");
             List<KeyValuePair<string, Transfer>> tmp = new List<KeyValuePair<string, Transfer>>(Transfers);
             foreach (var item in tmp)
             {
@@ -761,11 +820,13 @@ namespace DNDinventory.ViewModel
                     break;
                 }
             }
+            logger.Info($"< TransferClient_Complete(sender: {sender}, queue: [{queue}])");
         }
 
         private void deregisterEvents(TransferClient transferClient)
         {
-            if(transferClient == null)
+            logger.Info($"> deregisterEvents(transferClient: {transferClient})");
+            if (transferClient == null)
             {
                 return;
             }
@@ -775,10 +836,12 @@ namespace DNDinventory.ViewModel
             transferClient.ProgressChanged -= TransferClient_ProgressChanged;
             transferClient.Queued -= TransferClient_Queued;
             transferClient.Stopped -= TransferClient_Stopped;
+            logger.Info($"< deregisterEvents(transferClient: {transferClient})");
         }
 
         public MainViewModel()
         {
+            logger.Info($"> MainViewModel()");
             transferClients = new List<TransferClient>();
             hub = new MessageHub();
             listener = new Listener();
@@ -799,19 +862,23 @@ namespace DNDinventory.ViewModel
             }
 
             setupInv();
+            logger.Info($"< MainViewModel()");
         }
 
         public void OnWindowClosing(object sender, CancelEventArgs e)
         {
+            logger.Info($"> OnWindowClosing()");
             foreach (var client in transferClients)
             {
                 deregisterEvents(client);
             }
             Properties.Settings.Default.Save();
+            logger.Info($"< OnWindowClosing()");
         }
 
         private void initDefaults()
         {
+            logger.Debug($"> initDefaults()");
             settingsFileLocation = Properties.Settings.Default.SettingsFileLocation;
             ExecuteQuickLoadSettings();
             ConnectionStatus = "No connection";
@@ -820,6 +887,7 @@ namespace DNDinventory.ViewModel
             ProgressOverall = 0;
             SetFolderOutputTxt = outputFolder;
             SettingsFileLocationTxt = settingsFileLocation;
+            logger.Debug($"< initDefaults()");
         }
 
         private void UpdateSavedSettings() {
@@ -852,6 +920,7 @@ namespace DNDinventory.ViewModel
 
         private void Listener_Accepted(object sender, SocketAcceptedEventArgs e)
         {
+            logger.Info($"> Listener_Accepted(sender: {sender}, SocketAcceptedEventArgs: {e})");
             var transferClient = new TransferClient(e.Accepted);
             transferClients.Add(transferClient);
             transferClient.OutputFolder = outputFolder;
@@ -862,6 +931,7 @@ namespace DNDinventory.ViewModel
             ConnectionStatus = transferClient.EndPoint.Address.ToString();
 
             sendFileCommand.RaiseCanExecuteChanged();
+            logger.Info($"< Listener_Accepted(sender: {sender}, SocketAcceptedEventArgs: {e})");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

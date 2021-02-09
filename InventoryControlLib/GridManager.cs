@@ -10,6 +10,8 @@ namespace InventoryControlLib
 {
     public sealed class GridManager
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private IMessageHub hub;
         private Guid gridSubscriptionToken;
         private Guid itemSubscriptionToken;
@@ -27,25 +29,33 @@ namespace InventoryControlLib
 
         public void SetHub(IMessageHub MessageHub)
         {
+            logger.Debug($"> SetHub(MessageHub: {MessageHub})");
             if (hub == null)
             {
                 hub = MessageHub;
                 gridSubscriptionToken = hub.Subscribe<GridAddUpdate>(GridAddUpdate);
                 itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+                logger.Debug($"Hub set");
             }
+            logger.Debug($"< SetHub(MessageHub: {MessageHub})");
         }
 
         private GridManager()
         {
+            logger.Info($"> GridManager()");
             grids = new List<UpdateGrid>();
+            logger.Info($"< GridManager()");
         }
 
         private void GridAddUpdate(GridAddUpdate gridUpdate)
         {
+            logger.Info($"> GridAddUpdate(gridUpdate: [{gridUpdate}])");
             grids.Add(gridUpdate.Grid);
+            logger.Info($"< GridAddUpdate(gridUpdate: [{gridUpdate}])");
         }
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
+            logger.Debug($"> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
             foreach (var grid in grids)
             {
                 var item = positionUpdate.Item;
@@ -64,7 +74,12 @@ namespace InventoryControlLib
                         var p = new Point(startingX, startingY);
                         item.Transform(p);
                 }
+                else
+                {
+                    logger.Debug($"Ignored");
+                }
             }
+            logger.Debug($"< ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
         }
     }
 }

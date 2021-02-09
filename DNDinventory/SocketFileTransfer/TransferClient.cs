@@ -15,6 +15,8 @@ namespace DNDinventory.SocketFileTransfer
 
     public class TransferClient
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private Socket _baseSocket;
         private byte[] _buffer = new byte[8192];
         private ConnectCallback _connectCallback;
@@ -37,25 +39,32 @@ namespace DNDinventory.SocketFileTransfer
 
         public TransferClient()
         {
+            logger.Info("> TransferClient()");
             _baseSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _transfers = new Dictionary<int, TransferQueue>();
+            logger.Info("< TransferClient()");
         }
 
         public TransferClient(Socket socket)
         {
+            logger.Info($"> TransferClient(socket: {socket})");
             _baseSocket = socket;
             EndPoint = (IPEndPoint)_baseSocket.RemoteEndPoint;
             _transfers = new Dictionary<int, TransferQueue>();
+            logger.Info($"< TransferClient(socket: {socket})");
         }
 
         public void Connect(string hostName, int port, ConnectCallback callback)
         {
+            logger.Info($"> Connect(hostName: {hostName}, port: {port}), callback {callback}");
             _connectCallback = callback;
             _baseSocket.BeginConnect(hostName, port, connectCallback, null);
+            logger.Info($"< Connect(hostName: {hostName}, port: {port}), callback {callback}");
         }
 
         private void connectCallback(IAsyncResult asyncResult)
         {
+            logger.Info($"> Connect(AsyncResult: {asyncResult})");
             string error = null;
             try
             {
@@ -65,25 +74,30 @@ namespace DNDinventory.SocketFileTransfer
             catch (Exception ex)
             {
                 error = ex.Message;
+                logger.Error(ex, "Whoeps, something went wrong");
             }
 
             _connectCallback(this, error);
+            logger.Info($"< Connect(AsyncResult: {asyncResult})");
         }
 
         public void Run()
         {
+            logger.Info("> Run()");
             try
             {
                 _baseSocket.BeginReceive(_buffer, 0, _buffer.Length, SocketFlags.Peek, receiveCallback, null);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                logger.Error(ex, "Whoeps, something went wrong");
             }
+            logger.Info("< Run()");
         }
 
         public void QueueTransfer(string fileName)
         {
+            logger.Info("> QueueTransfer()");
             try
             {
                 TransferQueue queue = TransferQueue.CreateUploadQueue(this, fileName);
@@ -100,21 +114,26 @@ namespace DNDinventory.SocketFileTransfer
                     Queued(this, queue);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.Error(ex, "Whoeps, something went wrong");
             }
+            logger.Info("< QueueTransfer()");
         }
 
         public void StartTransfer(TransferQueue queue)
         {
+            logger.Info($"> StartTransfer(queue: [{queue}])");
             PacketWriter packetWriter = new PacketWriter();
             packetWriter.Write((byte)Headers.Start);
             packetWriter.Write(queue.Id);
             Send(packetWriter.GetBytes());
+            logger.Info($"< StartTransfer(queue: [{queue}])");
         }
 
         public void StopTransfer(TransferQueue queue)
         {
+            logger.Info($"> StopTransfer(queue: [{queue}])");
             if (queue.Type == QueueType.Upload)
             {
                 queue.Stop();
@@ -130,10 +149,12 @@ namespace DNDinventory.SocketFileTransfer
             packetWriter.Write(queue.Id);
             Send(packetWriter.GetBytes());
             queue.Close();
+            logger.Info($"< StopTransfer(queue: [{queue}])");
         }
 
         public void PauseTransfer(TransferQueue queue)
         {
+            logger.Info($"> PauseTransfer(queue: [{queue}])");
             if (queue.Type==QueueType.Upload)
             {
                 queue.Pause();
@@ -148,10 +169,12 @@ namespace DNDinventory.SocketFileTransfer
             packetWriter.Write((byte)Headers.Pause);
             packetWriter.Write(queue.Id);
             Send(packetWriter.GetBytes());
+            logger.Info($"< PauseTransfer(queue: [{queue}])");
         }
 
         public int GetOverallProgress()
         {
+            logger.Debug("> GetOverallProgress()");
             int overall = 0;
 
             if (_transfers != null)
@@ -167,13 +190,17 @@ namespace DNDinventory.SocketFileTransfer
                 }
             }
 
+            logger.Debug($"< GetOverallProgress().return({overall})");
             return overall;
         }
 
         public void Send(byte[] data)
         {
+            logger.Debug($"> Send(data: {data})");
             if (Closed)
             {
+                logger.Warn("Client closed");
+                logger.Debug($"< Send(data: {data})");
                 return;
             }
 
@@ -184,15 +211,18 @@ namespace DNDinventory.SocketFileTransfer
                     _baseSocket.Send(BitConverter.GetBytes(data.Length), 0, 4, SocketFlags.None);
                     _baseSocket.Send(data, 0, data.Length, SocketFlags.None);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     Close();
+                    logger.Error(ex, "Whoeps, something went wrong");
                 }
             }
+            logger.Debug($"< Send(data: {data})");
         }
 
         public void Close()
         {
+            logger.Info("> Close()");
             Closed = true;
             _baseSocket.Close();
 
@@ -204,10 +234,8 @@ namespace DNDinventory.SocketFileTransfer
             _buffer = null;
             OutputFolder = null;
 
-            if (Disconnected!=null)
-            {
-                Disconnected(this, EventArgs.Empty);
-            }
+            Disconnected?.Invoke(this, EventArgs.Empty);
+            logger.Info("< Close()");
         }
 
         private void process()
@@ -215,6 +243,7 @@ namespace DNDinventory.SocketFileTransfer
             PacketReader packetReader = new PacketReader(_buffer);
 
             Headers header = (Headers)packetReader.ReadByte();
+            logger.Trace($"> process(header: {header.ToString()})");
 
             switch (header)
             {
@@ -223,6 +252,7 @@ namespace DNDinventory.SocketFileTransfer
                         int id = packetReader.ReadInt32();
                         string fileName = packetReader.ReadString();
                         long length = packetReader.ReadInt64();
+                        logger.Trace($"id: {id}, fileName: {fileName}, length: {length}");
 
                         TransferQueue queue = TransferQueue.CreateDownloadQueue(this, id, Path.Combine(OutputFolder, Path.GetFileName(fileName)), length);
 
@@ -237,6 +267,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Start:
                     {
                         int id = packetReader.ReadInt32();
+                        logger.Trace($"id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {
@@ -247,6 +278,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Stop:
                     {
                         int id = packetReader.ReadInt32();
+                        logger.Trace($"id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {
@@ -266,6 +298,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Pause:
                     {
                         int id = packetReader.ReadInt32();
+                        logger.Trace($"id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {
@@ -289,6 +322,7 @@ namespace DNDinventory.SocketFileTransfer
                         long index = packetReader.ReadInt64();
                         int size = packetReader.ReadInt32();
                         byte[] buffer = packetReader.ReadBytes(size);
+                        logger.Trace($"id: {id}, index: {index}, size: {size}, buffer: {buffer}");
 
                         TransferQueue queue = _transfers[id];
 
@@ -320,10 +354,12 @@ namespace DNDinventory.SocketFileTransfer
                     break;
             }
             packetReader.Dispose();
+            logger.Trace($"< process(header: {header.ToString()})");
         }
 
         private void receiveCallback(IAsyncResult asyncResult)
         {
+            logger.Trace($"> receiveCallback(AsyncResult: {asyncResult})");
             try
             {
                 int found = _baseSocket.EndReceive(asyncResult);
@@ -344,26 +380,31 @@ namespace DNDinventory.SocketFileTransfer
 
                 Run();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 Close();
+                logger.Error(ex, "Whoeps, something went wrong");
             }
+            logger.Trace($"< receiveCallback(AsyncResult: {asyncResult})");
         }
 
         internal void callProgressChanged(TransferQueue queue)
         {
-            if (ProgressChanged!=null)
-            {
-                ProgressChanged(this, queue);
-            }
+            logger.Trace($"> callProgressChanged(queue: {queue})");
+            ProgressChanged?.Invoke(this, queue);
+            logger.Trace($"< callProgressChanged(queue: {queue})");
         }
 
         internal void callCompleted(TransferQueue queue)
         {
-            if (Complete != null)
-            {
-                Complete(this, queue);
-            }
+            logger.Trace($"> callCompleted(queue: {queue})");
+            Complete?.Invoke(this, queue);
+            logger.Trace($"< callCompleted(queue: {queue})");
+        }
+
+        public override string ToString()
+        {
+            return $"{EndPoint.ToString()}";
         }
     }
 }

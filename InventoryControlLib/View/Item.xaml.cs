@@ -443,5 +443,10 @@ namespace InventoryControlLib.View
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
+
+        public override string ToString()
+        {
+            return $"id: {ID}; row: {Row}; column: {Column}; rowSpan: {RowSpan}; columnSpan: {ColumnSpan}";
+        }
     }
 }

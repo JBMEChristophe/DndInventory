@@ -1,4 +1,5 @@
 ﻿using Easy.MessageHub;
+using InventoryControlLib.Model;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -29,8 +30,6 @@ namespace InventoryControlLib.View
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
         Grid parent;
-        ItemModel model;
-
         Point currentPoint;
         Point startingPoint;
         bool isInDrag = false;
@@ -46,132 +45,15 @@ namespace InventoryControlLib.View
             this.parent = parent;
             if (model == null)
             {
-                this.model = new ItemModel(0, width, height, 0, 0);
+                this.Model = new ItemModel(0, width, height, 0, 0);
             }
             else
             {
-                this.model = model;
-                OnPropertyChange("Image");
-                OnPropertyChange("Quantity");
-                OnPropertyChange("IsQuantityVisible");
+                this.Model = model;
             }
-            this.model.Parent = this;
-            cellWidth = width;
-            cellHeight = height;
-        }
-
-        public int ID
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return -1;
-                }
-                return model.ID;
-            }
-        }
-
-        public bool IsStackable
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return false;
-                }
-                return model.IsStackable;
-            }
-        }
-
-        public Point StartingPoint
-        {
-            get { return startingPoint; }
-        }
-
-        double _cellWidth;
-        double cellWidth
-        {
-            get
-            {
-                return _cellWidth;
-            }
-            set
-            {
-                _cellWidth = value;
-                OnPropertyChange("ItemWidth");
-            }
-        }
-
-        public double ItemWidth 
-        { 
-            get
-            {
-                if (model == null)
-                {
-                    return cellWidth;
-                }
-                return cellWidth * model.CellSpanX;
-            }
-        }
-
-        double _cellHeight;
-        double cellHeight
-        {
-            get
-            {
-                return _cellHeight;
-            }
-            set
-            {
-                _cellHeight = value;
-                OnPropertyChange("ItemHeight");
-            }
-        }
-
-        public BitmapImage Image
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return new BitmapImage();
-                }
-                    return model.BitMapImage;
-            }
-        }
-
-        public Uri ImageUri
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return new Uri("");
-                }
-                return model.Image;
-            }
-            set
-            {
-                if (model != null && model.Image != value)
-                {
-                    model.Image = value;
-                    OnPropertyChange("ImageUri");
-                    OnPropertyChange("Image");
-                }
-            }
-        }
-
-        public double ItemHeight
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return cellHeight;
-                }
-                return cellHeight * model.CellSpanY;
-            }
+            Model.CellWidth = width;
+            Model.CellHeight = height;
+            OnPropertyChange("Model");
         }
 
         public Grid GridParent
@@ -189,134 +71,7 @@ namespace InventoryControlLib.View
             }
         }
 
-        public int Column
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return 0;
-                }
-                return model.CellX;
-            }
-            set
-            {
-                if (model != null && model.CellX != value)
-                {
-                    model.CellX = value;
-                    OnPropertyChange("Column");
-                }
-            }
-        }
-
-        public int Row
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return 0;
-                }
-                return model.CellY;
-            }
-            set
-            {
-                if (model != null && model.CellY != value)
-                {
-                    model.CellY = value;
-                    OnPropertyChange("Row");
-                }
-            }
-        }
-
-        public int ColumnSpan
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return 0;
-                }
-                return model.CellSpanX;
-            }
-            set
-            {
-                if (model != null && model.CellSpanX != value)
-                {
-                    model.CellSpanX = value;
-                    OnPropertyChange("ColumnSpan");
-                }
-            }
-        }
-
-        public int RowSpan
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return 0;
-                }
-                return model.CellSpanY;
-            }
-            set
-            {
-                if (model != null && model.CellSpanY != value)
-                {
-                    model.CellSpanY = value;
-                    OnPropertyChange("RowSpan");
-                }
-            }
-        }
-
-        public int Quantity
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return 1;
-                }
-                return model.Quantity;
-            }
-            set
-            {
-                if (model != null && model.Quantity != value)
-                {
-                    model.Quantity = value;
-                    OnPropertyChange("Quantity");
-                    splitCommand?.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public bool IsQuantityVisible
-        {
-            get
-            {
-                if (model == null)
-                {
-                    return false;
-                }
-                return model.IsStackable;
-            }
-            set
-            {
-                if (model != null && model.IsStackable != value)
-                {
-                    model.IsStackable = value;
-                    OnPropertyChange("IsVisible");
-                }
-            }
-        }
-
-        public ItemModel Model
-        {
-            get
-            {
-                return model;
-            }
-        }
+        public ItemModel Model { get; }
 
         DelegateCommand splitCommand;
         public ICommand SplitCommand
@@ -338,7 +93,7 @@ namespace InventoryControlLib.View
 
         private bool CanExecuteSplit()
         {
-            return model.Quantity > 1;
+            return Model.Quantity > 1;
         }
 
         public void RemoveEvents()
@@ -394,17 +149,17 @@ namespace InventoryControlLib.View
                 else
                 {
                     var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-                    if (screenPoint.X + ItemWidth > Application.Current.MainWindow.RenderSize.Width)
+                    if (screenPoint.X + Model.Width > Application.Current.MainWindow.RenderSize.Width)
                     {
-                        transform.X += ((Application.Current.MainWindow.Width - screenPoint.X) - ItemWidth);
+                        transform.X += ((Application.Current.MainWindow.Width - screenPoint.X) - Model.Width);
                     }
                     if (screenPoint.X < 0)
                     {
                         transform.X += (-screenPoint.X);
                     }
-                    if (screenPoint.Y + ItemHeight > Application.Current.MainWindow.RenderSize.Height)
+                    if (screenPoint.Y + Model.Height > Application.Current.MainWindow.RenderSize.Height)
                     {
-                        transform.Y += (Application.Current.MainWindow.Height - (screenPoint.Y + ItemHeight));
+                        transform.Y += (Application.Current.MainWindow.Height - (screenPoint.Y + Model.Height));
                     }
                     if (screenPoint.Y < 0)
                     {
@@ -446,7 +201,7 @@ namespace InventoryControlLib.View
 
         public override string ToString()
         {
-            return $"id: {ID}; row: {Row}; column: {Column}; rowSpan: {RowSpan}; columnSpan: {ColumnSpan}";
+            return Model.ToString();
         }
     }
 }

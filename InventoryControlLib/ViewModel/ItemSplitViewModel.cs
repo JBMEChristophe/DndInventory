@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using InventoryControlLib.Model;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

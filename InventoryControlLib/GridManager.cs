@@ -49,13 +49,13 @@ namespace InventoryControlLib
 
         private void GridAddUpdate(GridAddUpdate gridUpdate)
         {
-            logger.Info($"> GridAddUpdate(gridUpdate: [{gridUpdate}])");
+            logger.Info($"(GridManager)> GridAddUpdate(gridUpdate: [{gridUpdate}])");
             grids.Add(gridUpdate.Grid);
-            logger.Info($"< GridAddUpdate(gridUpdate: [{gridUpdate}])");
+            logger.Info($"(GridManager)< GridAddUpdate(gridUpdate: [{gridUpdate}])");
         }
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
-            logger.Debug($"> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
+            logger.Debug($"(GridManager)> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
             foreach (var grid in grids)
             {
                 var item = positionUpdate.Item;
@@ -69,8 +69,8 @@ namespace InventoryControlLib
                     && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y))
                 {
                         var parentPoint = item.GridParent.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-                        var startingX = item.Column * grid.CellSize.Width + parentPoint.X;
-                        var startingY = item.Row * grid.CellSize.Height + parentPoint.Y;
+                        var startingX = item.Model.CellX * grid.CellSize.Width + parentPoint.X;
+                        var startingY = item.Model.CellY * grid.CellSize.Height + parentPoint.Y;
                         var p = new Point(startingX, startingY);
                         item.Transform(p);
                 }
@@ -79,7 +79,7 @@ namespace InventoryControlLib
                     logger.Debug($"Ignored");
                 }
             }
-            logger.Debug($"< ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
+            logger.Debug($"(GridManager)< ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
         }
     }
 }

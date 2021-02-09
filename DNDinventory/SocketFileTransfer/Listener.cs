@@ -115,6 +115,10 @@ namespace DNDinventory.SocketFileTransfer
 
                 Accepted?.Invoke(this, new SocketAcceptedEventArgs(sck));
             }
+            catch (ObjectDisposedException ex)
+            {
+                logger.Warn(ex, "Whoeps, something went wrong");
+            }
             catch (Exception ex)
             {
                 logger.Error(ex, "Whoeps, something went wrong");

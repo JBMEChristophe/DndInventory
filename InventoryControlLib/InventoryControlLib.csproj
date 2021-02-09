@@ -88,7 +88,7 @@
     <Compile Include="View\ItemSplitWindow.xaml.cs">
       <DependentUpon>ItemSplitWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ItemModel.cs" />
+    <Compile Include="Model\ItemModel.cs" />
     <Compile Include="HubUpdates.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

@@ -7,7 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using static DNDinventory.UpdatePolicy;
 
-namespace DNDinventory 
+namespace DNDinventory
 {
     public class Settings 
     {
@@ -15,44 +15,60 @@ namespace DNDinventory
         public string host = "localhost";
         public string port = "100";
         public string outputFolder = "Transfers";
+
+        public override string ToString()
+        {
+            return $"host: {host}; port: {port}; outputFolder:{outputFolder}";
+        }
     }
 
-    public class SettingsFileHandler 
+    public class SettingsFileHandler
     {
-        public Settings currentSettings;
-        XmlSerializer ser;
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public SettingsFileHandler () 
+        public Settings currentSettings;
+
+        public SettingsFileHandler ()
         {
+            logger.Info($"> SettingsFileHandler()");
             currentSettings = new Settings();
-            ser = new XmlSerializer(typeof(Settings));
+            logger.Info($"< SettingsFileHandler()");
         }
         
-        public void WriteToXml (string filename) 
+        public void WriteToXml (string filename)
         {
+            logger.Info($"> WriteToXml(filename: {filename})");
             XmlHelper<Settings>.WriteToXml(filename, currentSettings);
+            logger.Info($"< WriteToXml(filename: {filename})");
         }
 
-        public void ReadFromXml (string filename)   
+        public void ReadFromXml (string filename)
         {
+            logger.Info($"> ReadFromXml(filename: {filename})");
             try
             {
                 var settings = XmlHelper<Settings>.ReadFromXml(filename);
                 if (settings != null)
                 {
+                    logger.Debug("Set current settings");
+                    logger.Trace($"new settings: [{settings}]");
                     currentSettings = settings;
                 }
             }
             catch(System.InvalidOperationException)
             {
+                logger.Debug("Trying SettingsV0");
                 //try older save file
                 var settings = XmlHelper<SettingsV0>.ReadFromXml(filename);
                 if (settings != null)
                 {
+                    logger.Debug("Set current settings by using SettingsV0");
                     currentSettings = new Settings { host = settings.host, port = settings.port, outputFolder = settings.outputFolder };
+                    logger.Trace($"new settings: [{currentSettings}]");
                     WriteToXml(filename);
                 }
             }
+            logger.Info($"< ReadFromXml(filename: {filename})");
         }
     }
 }

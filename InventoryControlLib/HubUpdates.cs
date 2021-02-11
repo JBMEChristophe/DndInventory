@@ -13,6 +13,11 @@ namespace InventoryControlLib
     {
         public Item Item { get; set; }
         public Point Position { get; set; }
+
+        public override string ToString()
+        {
+            return $"item: [{Item}]; position: [{Position}]";
+        }
     }
 
     class UpdateGrid
@@ -20,10 +25,20 @@ namespace InventoryControlLib
         public Grid Grid { get; set; }
         public Size Size { get; set; }
         public Size CellSize { get; set; }
+
+        public override string ToString()
+        {
+            return $"size: [{Size}]; cellSize: [{CellSize}]";
+        }
     }
 
     class GridAddUpdate
     {
         public UpdateGrid Grid { get; set; }
+
+        public override string ToString()
+        {
+            return $"Grid: {Grid}";
+        }
     }
 }

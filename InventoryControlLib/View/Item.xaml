@@ -14,19 +14,19 @@
         <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
     </UserControl.Resources>
     <Grid>
-        <Border CornerRadius="5" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}">
+        <Border CornerRadius="5" Width="{Binding Model.Width}" Height="{Binding Model.Height}">
             <Border.Background>
                 <SolidColorBrush Color="Gray" Opacity="0.5" />
             </Border.Background>
         </Border>
-        <Image Source="{Binding Image}" Width="{Binding ItemWidth}" Height="{Binding ItemHeight}"/>
-        <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding IsQuantityVisible, Converter={StaticResource VisibleIfTrueConverter}}" >
-            <Label Content="{Binding Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        <Image Source="{Binding Model.ImageUri}" Width="{Binding Model.Width}" Height="{Binding Model.Height}"/>
+        <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" >
+            <Label Content="{Binding Model.Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
         </Border>
         <Grid.ContextMenu>
             <ContextMenu>
-                <MenuItem Header="Split" Command="{Binding SplitCommand}" Visibility="{Binding IsQuantityVisible, Converter={StaticResource VisibleIfTrueConverter}}" />
-                <Separator Visibility="{Binding IsQuantityVisible, Converter={StaticResource VisibleIfTrueConverter}}" />
+                <MenuItem Header="Split" Command="{Binding SplitCommand}" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" />
+                <Separator Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" />
                 <MenuItem Header="Test" />
             </ContextMenu>
         </Grid.ContextMenu>

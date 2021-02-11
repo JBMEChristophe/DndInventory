@@ -17,8 +17,11 @@ namespace DNDinventory.SocketFileTransfer
 
     public class TransferQueue
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public static TransferQueue CreateUploadQueue(TransferClient client, string fileName)
         {
+            logger.Info($"> CreateUploadQueue(client: {client}, fileName: {fileName})");
             try
             {
                 var queue = new TransferQueue();
@@ -31,15 +34,20 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Id = App.Random.Next();
                 queue.Length = queue.FS.Length;
                 queue.SelfCreated = true;
+
+                logger.Info($"< CreateUploadQueue(client: {client}, fileName: {fileName}).return(queue: [{queue}])");
                 return queue;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.Error(ex, "Whoeps, something went wrong");
+                logger.Info($"< CreateUploadQueue(client: {client}, fileName: {fileName}).return(null)");
                 return null;
             }
         }
         public static TransferQueue CreateDownloadQueue(TransferClient client, int id, string saveName, long length)
         {
+            logger.Info($"> CreateDownloadQueue(client: {client}, id: {id}, saveName: {saveName}, length: {length})");
             try
             {
                 var queue = new TransferQueue();
@@ -51,10 +59,13 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Length = length;
                 queue.Id = id;
                 queue.SelfCreated = false;
+                logger.Info($"< CreateDownloadQueue(client: {client}, id: {id}, saveName: {saveName}, length: {length}).return(queue: [{queue}])");
                 return queue;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.Error(ex, "Whoeps, something went wrong");
+                logger.Info($"< CreateDownloadQueue(client: {client}, id: {id}, saveName: {saveName}, length: {length}).return(null)");
                 return null;
             }
         }
@@ -87,24 +98,31 @@ namespace DNDinventory.SocketFileTransfer
 
         private TransferQueue()
         {
+            logger.Info("> TransferQueue()");
             pauseEvent = new ManualResetEvent(true);
             Running = true;
+            logger.Info("< TransferQueue()");
         }
 
         public void Start()
         {
+            logger.Info("> Start()");
             Running = true;
             Thread.Start(this);
+            logger.Info("< Start()");
         }
 
         public void Stop()
         {
+            logger.Info("> Stop()");
             Running = false;
+            logger.Info("< Stop()");
         }
 
         public void Pause()
         {
-            if(!Paused)
+            logger.Info("> Pause()");
+            if (!Paused)
             {
                 pauseEvent.Reset();
             }
@@ -114,16 +132,19 @@ namespace DNDinventory.SocketFileTransfer
             }
 
             Paused = !Paused;
+            logger.Info("< Pause()");
         }
 
         public void Close()
         {
+            logger.Info("> Close()");
             try
             {
                 Client.Transfers.Remove(Id);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                logger.Error(ex, "Whoeps, something went wrong");
             }
 
             Running = false;
@@ -131,21 +152,25 @@ namespace DNDinventory.SocketFileTransfer
             pauseEvent.Dispose();
 
             Client = null;
+            logger.Info("< Close()");
         }
 
         public void Write(byte[] bytes, long index)
         {
-            lock(this)
+            logger.Trace("> Write()");
+            lock (this)
             {
                 FS.Position = index;
                 FS.Write(bytes, 0, bytes.Length);
                 Transferred += bytes.Length;
             }
+            logger.Trace("< Write()");
         }
 
         private static void transferProc(object obj)
         {
             TransferQueue queue = (TransferQueue)obj;
+            logger.Debug($"> transferProc(queue: {queue})");
 
             while (queue.Running && queue.Index < queue.Length)
             {
@@ -185,7 +210,13 @@ namespace DNDinventory.SocketFileTransfer
             }
 
             queue.Client?.callCompleted(queue);
+            logger.Debug($"< transferProc(queue: {queue})");
             queue.Close();
+        }
+
+        public override string ToString()
+        {
+            return $"client: {Client.ToString()}; id: {Id}; type: {Type}; filename:{Filename}";
         }
     }
 }

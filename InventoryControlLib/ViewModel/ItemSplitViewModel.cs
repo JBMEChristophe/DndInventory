@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using InventoryControlLib.Model;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +14,8 @@ namespace InventoryControlLib.ViewModel
 
     public class ItemSplitViewModel : INotifyPropertyChanged
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public event SplitEvent SplitClicked;
 
         private ItemModel item;
@@ -103,6 +106,7 @@ namespace InventoryControlLib.ViewModel
 
         private void ExecuteSplit()
         {
+            logger.Debug("> ExecuteSplit()");
             if (Value > 0)
             {
                 if (SplitClicked != null && SplitClicked(item, Value))
@@ -119,6 +123,12 @@ namespace InventoryControlLib.ViewModel
                     }
                 }
             }
+            else
+            {
+                logger.Warn("Value 0 or lower");
+            }
+
+            logger.Debug("< ExecuteSplit()");
         }
 
         private bool CanExecuteSplit()
@@ -128,6 +138,7 @@ namespace InventoryControlLib.ViewModel
 
         public ItemSplitViewModel(ItemModel item)
         {
+            logger.Info($"> ItemSplitViewModel(item: [{item}])");
             MinValue = (item.Quantity > 1) ? 1 : 0;
             MaxValue = item.Quantity - 1;
             Value = MinValue;
@@ -140,6 +151,7 @@ namespace InventoryControlLib.ViewModel
             }
 
             this.item = item;
+            logger.Info($"< ItemSplitViewModel(item: [{item}])");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

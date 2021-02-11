@@ -114,5 +114,10 @@ namespace DNDinventory.Model
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
+
+        public override string ToString()
+        {
+            return $"id: {Id}; type: {Type}; filename:{FileName}";
+        }
     }
 }

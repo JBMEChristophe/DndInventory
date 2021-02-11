@@ -38,12 +38,20 @@
     <Reference Include="Easy.MessageHub, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Easy.MessageHub.5.0.0\lib\net45\Easy.MessageHub.dll</HintPath>
     </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.7.7\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="Prism, Version=8.0.0.1909, Culture=neutral, PublicKeyToken=40ee6c3a2184dc59, processorArchitecture=MSIL">
       <HintPath>..\packages\Prism.Core.8.0.0.1909\lib\net47\Prism.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -66,11 +74,6 @@
     <Compile Include="ASyncCommand.cs" />
     <Compile Include="Interface\IAsyncCommand.cs" />
     <Compile Include="Interface\IErrorHandler.cs" />
-    <Compile Include="Interface\IInventory.cs" />
-    <Compile Include="Model\Inventory.cs" />
-    <Compile Include="Model\Item.cs" />
-    <Compile Include="Model\ItemSlot.cs" />
-    <Compile Include="Model\Location.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsFileHandler.cs" />
     <Compile Include="SocketFileTransfer\Headers.cs" />
@@ -84,7 +87,6 @@
     <Compile Include="UpdatePolicy.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="XmlHelper.cs" />
-    <Compile Include="XmlReader.cs" />
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -93,9 +95,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Model\Character.cs" />
-    <Compile Include="Model\DndClass.cs" />
-    <Compile Include="Model\DndRace.cs" />
     <Compile Include="View\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -119,6 +118,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

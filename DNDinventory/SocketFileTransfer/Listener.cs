@@ -40,6 +40,8 @@ namespace DNDinventory.SocketFileTransfer
 
     internal class Listener
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         #region Variables
         private Socket _socket = null;
         private bool _running = false;
@@ -67,13 +69,18 @@ namespace DNDinventory.SocketFileTransfer
 
         public Listener()
         {
-
+            logger.Info(">< Listener()");
         }
 
         public void Start(int port)
         {
+            logger.Info($"> Start(port: {port})");
             if (_running)
+            {
+                logger.Info("Already running");
+                logger.Info($"< Start(port: {port})");
                 return;
+            }
 
             _port = port;
             _running = true;
@@ -81,34 +88,48 @@ namespace DNDinventory.SocketFileTransfer
             _socket.Bind(new IPEndPoint(IPAddress.Any, port));
             _socket.Listen(100);
             _socket.BeginAccept(acceptCallback, null);
+            logger.Info($"< Start(port: {port})");
         }
 
         public void Stop()
         {
+            logger.Info("> Stop()");
             if (!_running)
+            {
+                logger.Info("Already stopped");
+                logger.Info("< Stop()");
                 return;
+            }
 
             _running = false;
             _socket.Close();
+            logger.Info("< Stop()");
         }
 
         private void acceptCallback(IAsyncResult ar)
         {
+            logger.Info($"> acceptCallback(AsyncResult: {ar})");
             try
             {
                 Socket sck = _socket.EndAccept(ar);
 
-                if (Accepted != null)
-                {
-                    Accepted(this, new SocketAcceptedEventArgs(sck));
-                }
+                Accepted?.Invoke(this, new SocketAcceptedEventArgs(sck));
             }
-            catch
+            catch (ObjectDisposedException ex)
             {
+                logger.Warn(ex, "Whoeps, something went wrong");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Whoeps, something went wrong");
             }
 
             if (_running)
+            {
                 _socket.BeginAccept(acceptCallback, null);
+            }
+
+            logger.Info($"< acceptCallback(AsyncResult: {ar})");
         }
     }
 }

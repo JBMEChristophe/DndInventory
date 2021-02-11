@@ -10,6 +10,8 @@ namespace InventoryControlLib
 {
     public sealed class GridManager
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private IMessageHub hub;
         private Guid gridSubscriptionToken;
         private Guid itemSubscriptionToken;
@@ -27,25 +29,33 @@ namespace InventoryControlLib
 
         public void SetHub(IMessageHub MessageHub)
         {
+            logger.Debug($"> SetHub(MessageHub: {MessageHub})");
             if (hub == null)
             {
                 hub = MessageHub;
                 gridSubscriptionToken = hub.Subscribe<GridAddUpdate>(GridAddUpdate);
                 itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+                logger.Debug($"Hub set");
             }
+            logger.Debug($"< SetHub(MessageHub: {MessageHub})");
         }
 
         private GridManager()
         {
+            logger.Info($"> GridManager()");
             grids = new List<UpdateGrid>();
+            logger.Info($"< GridManager()");
         }
 
         private void GridAddUpdate(GridAddUpdate gridUpdate)
         {
+            logger.Info($"(GridManager)> GridAddUpdate(gridUpdate: [{gridUpdate}])");
             grids.Add(gridUpdate.Grid);
+            logger.Info($"(GridManager)< GridAddUpdate(gridUpdate: [{gridUpdate}])");
         }
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
+            logger.Debug($"(GridManager)> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
             foreach (var grid in grids)
             {
                 var item = positionUpdate.Item;
@@ -59,12 +69,17 @@ namespace InventoryControlLib
                     && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y))
                 {
                         var parentPoint = item.GridParent.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-                        var startingX = item.Column * grid.CellSize.Width + parentPoint.X;
-                        var startingY = item.Row * grid.CellSize.Height + parentPoint.Y;
+                        var startingX = item.Model.CellX * grid.CellSize.Width + parentPoint.X;
+                        var startingY = item.Model.CellY * grid.CellSize.Height + parentPoint.Y;
                         var p = new Point(startingX, startingY);
                         item.Transform(p);
                 }
+                else
+                {
+                    logger.Debug($"Ignored");
+                }
             }
+            logger.Debug($"(GridManager)< ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
         }
     }
 }

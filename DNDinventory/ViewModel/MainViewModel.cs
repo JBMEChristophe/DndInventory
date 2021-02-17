@@ -55,6 +55,28 @@ namespace DNDinventory.ViewModel
             logger.Debug($"< AddInventory({name}, {size})");
         }
 
+        public void AddItemToCatalog(CatalogItemModel item, ref double index, double totalCount, ref double progress, IProgress<double> progressUpdate)
+        {
+            item.Width = 50 * item.CellSpanX;
+            item.Height = 50 * item.CellSpanY;
+            if (string.IsNullOrEmpty(item.ImageUri))
+            {
+                item.ImageUri = "Images/No_image_available.png";
+            }
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                Catalog._viewModel.Items.Add(new CatalogItem(hub, item));
+            });
+            index++;
+            if (index % 10 == 0)
+            {
+                progress = index / totalCount * 100.0;
+                progressUpdate.Report(progress);
+                System.Threading.Thread.Sleep(1);
+            }
+        }
+
         public Task<bool> SetupInv(IProgress<double> progressUpdate)
         {
             return Task.Run(() =>
@@ -70,37 +92,26 @@ namespace DNDinventory.ViewModel
                     });
                 }
 
-                List<CatalogItemModel> catalogItems;
-                if (File.Exists("Catalogs/Items.xml"))
-                {
-                    catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("Catalogs/Items.xml");
-                }
-                else
-                {
-                    catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
-                }
-
                 double index = 0.0;
                 double progress = 0.0;
-                foreach (var item in catalogItems)
-                {
-                    item.Width = 50 * item.CellSpanX;
-                    item.Height = 50 * item.CellSpanY;
-                    if (string.IsNullOrEmpty(item.ImageUri))
-                    {
-                        item.ImageUri = "Images/No_image_available.png";
-                    }
+                List<CatalogItemModel> catalogItems = new List<CatalogItemModel>();
 
-                    Application.Current.Dispatcher.Invoke(() =>
+                var defealtCatalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
+                string catalogItemsPath = "Catalogs/Items.xml";
+                if (File.Exists(catalogItemsPath))
+                {
+                    catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
+                    foreach (var item in catalogItems)
                     {
-                        Catalog._viewModel.Items.Add(new CatalogItem(hub, item));
-                    });
-                    index++;
-                    if (index % 10 == 0)
+                        AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
+                    }
+                }
+                foreach (var item in defealtCatalogItems)
+                {
+                    if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
-                        progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;
-                        progressUpdate.Report(progress);
-                        System.Threading.Thread.Sleep(1);
+                        usedDefaultCatalogItemModels.Add(item);
+                        AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
                 progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;
@@ -128,6 +139,7 @@ namespace DNDinventory.ViewModel
             }
         }
 
+        private List<CatalogItemModel> usedDefaultCatalogItemModels;
         private ItemCatalog catalog;
         public ItemCatalog Catalog
         {
@@ -909,6 +921,7 @@ namespace DNDinventory.ViewModel
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
             settingsFileHandler = new SettingsFileHandler();
+            usedDefaultCatalogItemModels = new List<CatalogItemModel>();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;

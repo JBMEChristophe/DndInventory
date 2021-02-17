@@ -344,13 +344,22 @@ namespace InventoryControlLib
                     canBePlaced = false;
                 }
 
+                int amount = 1;
+                if(Keyboard.IsKeyDown(Key.LeftCtrl) && item.Model.IsStackable)
+                {
+                    var amountWindow = new AmountWindow();
+                    amountWindow.Owner = Application.Current.MainWindow;
+                    amountWindow.ShowDialog();
+                    amount = amountWindow._viewModel.Value;
+                }
+
                 if (canBePlaced)
                 {
-                    AddItem(item.Model, icellX, icellY, 1);
+                    AddItem(item.Model, icellX, icellY, amount);
                 }
                 else if(placedItem != null && placedItem.Model.ID == item.Model.ID && item.Model.IsStackable)
                 {
-                    placedItem.Model.Quantity += 1;
+                    placedItem.Model.Quantity += amount;
                 }
             }
             else

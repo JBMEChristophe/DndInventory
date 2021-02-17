@@ -74,7 +74,7 @@ namespace InventoryControlLib.Model
             }
         }
         
-        public UiItemModel(int id, string name, List<ItemType> type, string cost, string weight, string source, double cellWidth, double cellHeight, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, Uri imageUri = null)
+        public UiItemModel(int id, string name, List<ItemType> type, string cost, string weight, string source, double cellWidth, double cellHeight, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, string imageUri = null)
             :base(id, name, type, cost, weight, source, (cellWidth * spanX), (cellHeight * spanY), spanX, spanY, isStackable, imageUri)
         {
             logger.Debug($"> UiItemModel(id: {id}, cellWidth: {cellWidth}, cellHeight: {cellHeight}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {imageUri})");
@@ -86,7 +86,7 @@ namespace InventoryControlLib.Model
             logger.Debug($"< UiItemModel(id: {id}, cellWidth: {cellWidth}, cellHeight: {cellHeight}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {imageUri})");
         }
 
-        public UiItemModel(int id, string name, ItemType type, string cost, string weight, string source, double cellWidth, double cellHeight, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, Uri imageUri = null)
+        public UiItemModel(int id, string name, ItemType type, string cost, string weight, string source, double cellWidth, double cellHeight, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, string imageUri = null)
             : this(id, name, new List<ItemType> { type }, cost, weight, source, cellWidth, cellHeight, column, row, spanX, spanY, quantity, isStackable, imageUri)
         { }
 

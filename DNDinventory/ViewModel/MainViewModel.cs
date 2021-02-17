@@ -18,6 +18,7 @@ using Easy.MessageHub;
 using System.Windows.Controls;
 using System.Windows;
 using InventoryControlLib.View;
+using InventoryControlLib.Model;
 
 namespace DNDinventory.ViewModel
 {
@@ -26,6 +27,7 @@ namespace DNDinventory.ViewModel
         private const string version = "0.1.0";
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
+        private List<CatalogItemModel> catalogItems;
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
@@ -62,10 +64,29 @@ namespace DNDinventory.ViewModel
             {
                 AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
             }
-            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(0, "Arrow", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.Ammunition }, "1 sp", "0.1 lbs", "PHB", 50, 50, isStackable: true, imageUri: new Uri("https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png"))));
-            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(1, "Sword", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.SimpleWeapon }, "1 gp", "1 lbs", "PHB", 50, 50, spanY: 2, imageUri: new Uri("https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png"))));
-            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(2, "Shield", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.Shield }, "8 sp", "0.8 lbs", "PHB", 50, 50, 3, 3, imageUri: new Uri("https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png"))));
-            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(3, "Taco", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.FoodAndDrink }, "1 cp", "0.1 lbs", "PHB", 50, 50, isStackable: true, imageUri: new Uri("https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png"))));
+
+            List<CatalogItemModel> catalogItems;
+            if (File.Exists("Catalogs/Items.xml"))
+            {
+                catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("Catalogs/Items.xml");
+            }
+            else
+            {
+                catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
+            }
+
+            foreach (var item in catalogItems)
+            {
+                item.Width = 50 * item.CellSpanX;
+                item.Height = 50 * item.CellSpanY;
+                if(string.IsNullOrEmpty(item.ImageUri))
+                { 
+                    item.ImageUri = "Images/No_image_available.png";
+                }
+                Catalog._viewModel.Items.Add(new CatalogItem(hub, item));
+            }
+
+            //XmlHelper<List<CatalogItemModel>>.WriteToXml("Items.xml", catalogItems);
             logger.Debug($"< setupInv()");
         }
 
@@ -861,6 +882,7 @@ namespace DNDinventory.ViewModel
         {
             logger.Info($"> MainViewModel()");
             transferClients = new List<TransferClient>();
+            catalogItems = new List<CatalogItemModel>();
             hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;

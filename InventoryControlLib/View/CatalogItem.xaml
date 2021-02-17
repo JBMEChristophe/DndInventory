@@ -19,6 +19,6 @@
                 <SolidColorBrush Color="Gray" Opacity="0.5" />
             </Border.Background>
         </Border>
-        <Image Source="{Binding Model.ImageUri}" Width="{Binding Model.Width}" Height="{Binding Model.Height}"/>
+        <Image Source="{Binding Model.Image}" Width="{Binding Model.Width}" Height="{Binding Model.Height}"/>
     </Grid>
 </UserControl>

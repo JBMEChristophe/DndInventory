@@ -82,10 +82,10 @@ namespace InventoryControlLib
             logger.Info($"({Name})< Init()");
         }
 
-        public void AddItem(int id, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
+        public void AddItem(int id, string name, List<ItemType> types, string cost, string weight, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
         {
             logger.Info($"({Name})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
-            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new UiItemModel(id, "Test Name", ItemType.Unknown, "No Cost", "No Weight", "UNKNOWN", CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
+            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new UiItemModel(id, name, types, cost, weight, source, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, imagePath));
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
             Grid.SetColumn(item, x);
@@ -99,7 +99,7 @@ namespace InventoryControlLib
 
         private void AddItem(ItemModel item, int x, int y, int quantity)
         {
-            AddItem(item.ID, x, y, item.Image.ToString(), item.CellSpanX, item.CellSpanY, quantity, item.IsStackable);
+            AddItem(item.ID, item.Name, item.Type, item.Cost, item.Weight, item.Source, x, y, item.ImageUri, item.CellSpanX, item.CellSpanY, quantity, item.IsStackable);
         }
 
         private Point? NextAvailableCell(int spanX, int spanY)

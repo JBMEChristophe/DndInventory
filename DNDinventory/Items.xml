@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfCatalogItemModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <CatalogItemModel>
+    <ID>0</ID>
+    <Name>Arrow</Name>
+    <Type>
+      <ItemType>Ammunition</ItemType>
+    </Type>
+    <Cost>1 sp</Cost>
+    <Weight>0.1 lb.</Weight>
+    <Source>PHB</Source>
+    <IsStackable>true</IsStackable>
+    <CellSpanX>1</CellSpanX>
+    <CellSpanY>1</CellSpanY>
+    <ImageUri>https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png</ImageUri>
+  </CatalogItemModel>
+  <CatalogItemModel>
+    <ID>1</ID>
+    <Name>Sword</Name>
+    <Type>
+      <ItemType>SimpleWeapon</ItemType>
+    </Type>
+    <Cost>2 gp</Cost>
+    <Weight>1 lb.</Weight>
+    <Source>PHB</Source>
+    <IsStackable>false</IsStackable>
+    <CellSpanX>1</CellSpanX>
+    <CellSpanY>2</CellSpanY>
+    <ImageUri>https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png</ImageUri>
+  </CatalogItemModel>
+  <CatalogItemModel>
+    <ID>2</ID>
+    <Name>Shield</Name>
+    <Type>
+      <ItemType>Shield</ItemType>
+    </Type>
+    <Cost>2 gp</Cost>
+    <Weight>2 lb.</Weight>
+    <Source>PHB</Source>
+    <IsStackable>false</IsStackable>
+    <CellSpanX>3</CellSpanX>
+    <CellSpanY>3</CellSpanY>
+    <ImageUri>https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png</ImageUri>
+  </CatalogItemModel>
+  <CatalogItemModel>
+    <ID>3</ID>
+    <Name>Taco</Name>
+    <Type>
+      <ItemType>FoodandDrink</ItemType>
+    </Type>
+    <Cost />
+    <Weight>0.1 lb.</Weight>
+    <Source>PHB</Source>
+    <IsStackable>true</IsStackable>
+    <CellSpanX>1</CellSpanX>
+    <CellSpanY>1</CellSpanY>
+    <ImageUri>https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png</ImageUri>
+  </CatalogItemModel>
+</ArrayOfCatalogItemModel>

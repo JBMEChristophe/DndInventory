@@ -20,7 +20,7 @@ namespace InventoryControlLib.Model
         [Description("Artisan's Tools")]
         ArtisansTools,
         [Description("Food and Drink")]
-        FoodAndDrink,
+        FoodandDrink,
         [Description("Treasure")]
         Treasure,
         [Description("Spellcasting Focus")]
@@ -48,7 +48,7 @@ namespace InventoryControlLib.Model
         [Description("Instrument")]
         Instrument,
         [Description("Tack and Harness")]
-        TackAndHarness,
+        TackandHarness,
         [Description("Potion")]
         Potion,
         [Description("Renaissance")]
@@ -75,6 +75,16 @@ namespace InventoryControlLib.Model
         Tools,
         [Description("Ring")]
         Ring,
+        [Description("Wondrous Item")]
+        WondrousItem,
+        [Description("Rod")]
+        Rod,
+        [Description("Wand")]
+        Wand,
+        [Description("Tattoo")]
+        Tattoo,
+        [Description("Scroll")]
+        Scroll,
         [Description("Other")]
         Other,
         [Description("Unknown")]

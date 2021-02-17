@@ -6,24 +6,31 @@
              xmlns:local="clr-namespace:InventoryControlLib.View"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <ListView ItemsSource="{Binding Items}">
-        <ListView.ItemTemplate>
-            <DataTemplate>
-                <Grid Margin="6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <ContentControl Content="{Binding .}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="10,0,0,0">
-                        <Label Content="{Binding Model.Name}" ContentStringFormat="Name: {0}"/>
-                        <Label Content="{Binding Model.TypeStr}" ContentStringFormat="Type: {0}"/>
-                        <Label Content="{Binding Model.Cost}" ContentStringFormat="Cost: {0}"/>
-                        <Label Content="{Binding Model.Weight}" ContentStringFormat="Weight: {0}"/>
-                        <Label Content="{Binding Model.Source}" ContentStringFormat="Source: {0}"/>
-                    </StackPanel>
-                </Grid>
-            </DataTemplate>
-        </ListView.ItemTemplate>
-    </ListView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <TextBox Grid.Row="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" />
+        <ListView Grid.Row="1" ItemsSource="{Binding SourceCollection}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="6" Width="300">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ContentControl Content="{Binding .}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="15,0,0,0">
+                            <TextBlock Text="{Binding Model.Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.TypeStr, StringFormat=Type: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.Cost, StringFormat=Cost: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.Weight, StringFormat=Weight: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
 </UserControl>

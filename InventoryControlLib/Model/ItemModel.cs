@@ -2,10 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using System.Xml.Serialization;
 
 namespace InventoryControlLib.Model
 {
@@ -15,19 +18,20 @@ namespace InventoryControlLib.Model
 
         public int ID
         {
-            get; private set;
+            get; set;
         }
 
         public string Name
         {
-            get; private set;
+            get; set;
         }
 
         public List<ItemType> Type
         {
-            get; private set;
+            get; set;
         }
 
+        [XmlIgnore]
         public string TypeStr
         {
             get 
@@ -42,63 +46,106 @@ namespace InventoryControlLib.Model
 
         public string Cost
         {
-            get; private set;
+            get; set;
         }
 
         public string Weight
         {
-            get; private set;
+            get; set;
         }
 
         public string Source
         {
-            get; private set;
+            get; set;
         }
 
         public bool IsStackable
         {
-            get; private set;
+            get; set;
         }
 
         public int CellSpanX
         {
-            get; private set;
+            get; set;
         }
 
         public int CellSpanY
         {
-            get; private set;
+            get; set;
         }
 
+        [XmlIgnore, DefaultValue("50")]
         public double Width
         {
-            get; private set;
+            get; set;
         }
 
+        [XmlIgnore, DefaultValue("50")]
         public double Height
         {
-            get; private set;
+            get; set;
         }
 
-        Uri imageUri;
-        public Uri ImageUri
-        { 
+        string xmlImageUrl;
+        [XmlElement(elementName: "ImageUri")]
+        public string XmlImageUrl
+        {
             get
             {
-                return imageUri;
+                return xmlImageUrl;
             }
             set
             {
-                imageUri = value;
-                Image = new BitmapImage(imageUri);
-                Image.DecodePixelWidth = (int)Math.Floor(Width);
+                xmlImageUrl = value;
+                ImageUri = xmlImageUrl;
+            }
+        }
+
+        Uri imageUri;
+        [XmlIgnore]
+        public string ImageUri
+        { 
+            get
+            {
+                if(imageUri == null)
+                {
+                    return null;
+                }
+
+                if (imageUri.IsAbsoluteUri)
+                {
+                    return imageUri.AbsoluteUri;
+                }
+                else
+                {
+                    var tmp = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString());
+                    return tmp;
+                }
+            }
+            set
+            {
+                imageUri = new Uri(value, UriKind.RelativeOrAbsolute);
                 OnPropertyChange("ImageUri");
                 OnPropertyChange("Image");
             }
         }
-        public BitmapImage Image { get; private set; }
-        
-        public ItemModel(int id, string name, List<ItemType> type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, Uri image = null)
+
+        [XmlIgnore]
+        public BitmapImage Image 
+        { 
+            get
+            {
+                var Image = new BitmapImage(imageUri);
+                Image.DecodePixelWidth = (int)Math.Floor(Width);
+                return Image;
+            }
+        }
+
+        public ItemModel()
+        {
+        }
+
+        public ItemModel(int id, string name, List<ItemType> type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
         {
             logger.Debug($"> ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
             ID = id;
@@ -113,11 +160,10 @@ namespace InventoryControlLib.Model
             Width = width;
             Height = height;
             ImageUri = image;
-            Image = new BitmapImage(image);
             logger.Debug($"< ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
         }
 
-        public ItemModel(int id, string name, ItemType type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, Uri image = null)
+        public ItemModel(int id, string name, ItemType type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
             :this(id, name, new List<ItemType> { type }, cost, weight, source, width, height, spanX, spanY, isStackable, image)
         { }
 

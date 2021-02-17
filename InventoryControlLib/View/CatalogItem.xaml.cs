@@ -25,6 +25,7 @@ namespace InventoryControlLib.View
     /// </summary>
     public partial class CatalogItem : UserControl, INotifyPropertyChanged
     {
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
         Point currentPoint;
@@ -35,12 +36,13 @@ namespace InventoryControlLib.View
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
 
-        public CatalogItem(IMessageHub hub, double width, double height, CatalogItemModel model = null, bool popupItem = false)
+        public CatalogItem(IMessageHub hub, CatalogItemModel model = null, bool popupItem = false)
         {
+            logger.Info($"> CatalogItem(hub: {hub}, model: {model}, popup: {popupItem})");
             InitializeComponent();
             if (popupItem)
             {
-                this.Model = new CatalogItemModel(model, width, height);
+                this.Model = new CatalogItemModel(model);
 
                 OnPropertyChange("Model");
                 return;
@@ -49,33 +51,23 @@ namespace InventoryControlLib.View
             this.hub = hub;
             if (model == null)
             {
-                this.Model = new CatalogItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", width, height, 0, 0);
+                this.Model = new CatalogItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", 50, 50, 0, 0);
             }
             else
             {
-                this.Model = new CatalogItemModel(model, width, height);
+                this.Model = new CatalogItemModel(model);
             }
 
-            popup = new Popup { Child = new CatalogItem(hub, width, height, model, true), PlacementTarget = this, Placement = PlacementMode.Relative };
+            popup = new Popup { Child = new CatalogItem(hub, model, true), 
+                PlacementTarget = this, 
+                Placement = PlacementMode.Relative, 
+                AllowsTransparency = true };
 
             OnPropertyChange("Model");
+            logger.Info($"< CatalogItem(hub: {hub}, model: {model}, popup: {popupItem})");
         }
 
         public CatalogItemModel Model { get; }
-
-        public void RemoveEvents()
-        {
-            MouseReleased = null;
-            MousePressed = null;
-        }
-
-        public void Transform(Point p)
-        {
-            var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-            transform.X += (p.X - screenPoint.X);
-            transform.Y += (p.Y - screenPoint.Y);
-            this.RenderTransform = transform;
-        }
 
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

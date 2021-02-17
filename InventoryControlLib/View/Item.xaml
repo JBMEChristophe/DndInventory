@@ -19,7 +19,7 @@
                 <SolidColorBrush Color="Gray" Opacity="0.5" />
             </Border.Background>
         </Border>
-        <Image Source="{Binding Model.ImageUri}" Width="{Binding Model.Width}" Height="{Binding Model.Height}"/>
+        <Image Source="{Binding Model.Image}" Width="{Binding Model.Width}" Height="{Binding Model.Height}" ToolTip="{Binding Model.Name}"/>
         <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" >
             <Label Content="{Binding Model.Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
         </Border>

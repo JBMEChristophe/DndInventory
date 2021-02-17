@@ -24,7 +24,11 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <cc:NumericUpDown Margin="4" Value="{Binding Value, Mode=TwoWay}" MinValue="{Binding MinValue}" MaxValue="{Binding MaxValue}" StartValue="{Binding MinValue}"/>
+        <cc:NumericUpDown Margin="4" Value="{Binding Value, Mode=TwoWay}" MinValue="{Binding MinValue}" MaxValue="{Binding MaxValue}" StartValue="{Binding MinValue}">
+            <cc:NumericUpDown.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}"/>
+            </cc:NumericUpDown.InputBindings>
+        </cc:NumericUpDown>
         <Button Grid.Column="2" Margin="4" Content="Ok" Command="{Binding OkCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}}" />
     </Grid>
 </Window>

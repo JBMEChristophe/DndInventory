@@ -1,4 +1,5 @@
 ﻿using Easy.MessageHub;
+using InventoryControlLib.Model;
 using InventoryControlLib.View;
 using System;
 using System.Collections.Generic;
@@ -101,15 +102,107 @@ namespace InventoryControlLib.ViewModel
                 return;
             }
 
-            CatalogItem item = e.Item as CatalogItem;
-            if (item.Model.Name.ToUpper().Contains(FilterText.ToUpper()))
+            List<KeyValuePair<string, string>> dict = new List<KeyValuePair<string, string>>();
+            var filter = FilterText.ToUpper();
+            if (filter.Contains("="))
             {
-                e.Accepted = true;
+                var tmp = filter.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                var tmp2 = tmp.Select(part => part.Split('='));
+                foreach (var pair in tmp2)
+                {
+                    dict.Add(new KeyValuePair<string, string>(pair[0], pair[1]));
+                }
+            }
+
+            CatalogItemModel item = (e.Item as CatalogItem).Model;
+
+            bool accept = false;
+
+            if (dict.Count > 0)
+            {
+                List<bool> accepts = new List<bool>();
+                foreach (var filterItem in dict)
+                {
+                    switch (filterItem.Key)
+                    {
+                        case "NAME":
+                            if (string.IsNullOrEmpty(filterItem.Value))
+                            {
+                                accepts.Add(true);
+                            }
+                            else
+                            {
+                                if (item.Name.ToUpper().Contains(filterItem.Value))
+                                {
+                                    accepts.Add(true);
+                                }
+                                else
+                                {
+                                    accepts.Add(false);
+                                }
+                            }
+                            break;
+                        case "TYPE":
+                            if (string.IsNullOrEmpty(filterItem.Value))
+                            {
+                                accepts.Add(true);
+                            }
+                            else
+                            {
+                                if (item.TypeStr.ToUpper().Contains(filterItem.Value))
+                                {
+                                    accepts.Add(true);
+                                }
+                                else
+                                {
+                                    accepts.Add(false);
+                                }
+                            }
+                            break;
+                        case "SOURCE":
+                            if (string.IsNullOrEmpty(filterItem.Value))
+                            {
+                                accepts.Add(true);
+                            }
+                            else
+                            {
+                                if (item.Source.ToUpper().Contains(filterItem.Value))
+                                {
+                                    accepts.Add(true);
+                                }
+                                else
+                                {
+                                    accepts.Add(false);
+                                }
+                            }
+                            break;
+                        default:
+                            accepts.Add(true);
+                            break;
+                    }
+                }
+                if(!accepts.Contains(false))
+                {
+                    accept = true;
+                }
             }
             else
             {
-                e.Accepted = false;
+                if (item.Name.ToUpper().Contains(filter))
+                {
+                    accept = true;
+                }
+                if (item.TypeStr.ToUpper().Contains(filter))
+                {
+                    accept = true;
+                }
+                if (item.Source.ToUpper().Contains(filter))
+                {
+                    accept = true;
+                }
             }
+
+            e.Accepted = accept;
         }
 
         public void ItemListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

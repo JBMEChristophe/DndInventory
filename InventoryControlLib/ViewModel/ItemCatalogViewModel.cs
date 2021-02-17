@@ -19,7 +19,23 @@ namespace InventoryControlLib.ViewModel
         private CollectionViewSource itemCollection;
         private string filterText;
 
-        public ObservableCollection<CatalogItem> Items { get; set; }
+        ObservableCollection<CatalogItem> items;
+        public ObservableCollection<CatalogItem> Items 
+        { 
+            get
+            {
+                return items;
+            }
+            set
+            {
+                if(items!=value)
+                {
+                    items = value;
+                    OnPropertyChange("Items");
+                    OnPropertyChange("ItemCount");
+                }
+            }
+        }
 
         public ICollectionView SourceCollection
         {
@@ -36,7 +52,30 @@ namespace InventoryControlLib.ViewModel
             itemCollection = new CollectionViewSource();
             itemCollection.Source = Items;
             itemCollection.Filter += itemCollection_Filter;
+            Items.CollectionChanged += Items_CollectionChanged;
             logger.Info("< ItemCatalogViewModel()");
+        }
+
+        private void Items_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChange("ItemCount");
+            OnPropertyChange("FilterItemCount");
+        }
+
+        public int ItemCount
+        {
+            get
+            {
+                return Items.Count;
+            }
+        }
+
+        public int FilterItemCount
+        {
+            get
+            {
+                return itemCollection.View.Cast<object>().Count();
+            }
         }
 
         public string FilterText
@@ -50,6 +89,7 @@ namespace InventoryControlLib.ViewModel
                 filterText = value;
                 this.itemCollection.View.Refresh();
                 OnPropertyChange("FilterText");
+                OnPropertyChange("FilterItemCount");
             }
         }
 

@@ -7,6 +7,7 @@
         xmlns:cc="clr-namespace:CustomControls;assembly=CustomControls"
         xmlns:icl="clr-namespace:InventoryControlLib.View;assembly=InventoryControlLib"
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>

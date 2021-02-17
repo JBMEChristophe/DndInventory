@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" />
         <ListView Grid.Row="1" ItemsSource="{Binding SourceCollection}">
@@ -32,5 +33,13 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+        <Grid Grid.Row="2" Height="Auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" Content="{Binding ItemCount}" ContentStringFormat="Items: {0}"/>
+            <Label Grid.Column="1" Content="{Binding FilterItemCount}" ContentStringFormat="Filtered items: {0}"/>
+        </Grid>
     </Grid>
 </UserControl>

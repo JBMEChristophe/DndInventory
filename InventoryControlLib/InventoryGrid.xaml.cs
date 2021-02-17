@@ -307,7 +307,8 @@ namespace InventoryControlLib
             var height = Rows * CellHeight;
             var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
-            if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
+            if (releasePoint.X < Application.Current.MainWindow.Width - 394 &&
+                releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
                 && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
             {
                 var cellX = (releasePoint.X - screenPoint.X) / CellWidth;

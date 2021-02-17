@@ -17,6 +17,7 @@ using System.Collections.ObjectModel;
 using Easy.MessageHub;
 using System.Windows.Controls;
 using System.Windows;
+using InventoryControlLib.View;
 
 namespace DNDinventory.ViewModel
 {
@@ -47,11 +48,6 @@ namespace DNDinventory.ViewModel
             };
             inv.Init();
 
-            inv.AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true, quantity: 5);
-            inv.AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
-            inv.AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX: 3);
-            inv.AddItem(3, 2, 1, "https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png", isStackable: true, quantity: 10);
-
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
             logger.Debug($"< AddInventory({name}, {size})");
@@ -66,6 +62,10 @@ namespace DNDinventory.ViewModel
             {
                 AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
             }
+            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(0, "Arrow", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.Ammunition }, "1 sp", "0.1 lbs", "PHB", 50, 50, isStackable: true, imageUri: new Uri("https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png"))));
+            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(1, "Sword", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.SimpleWeapon }, "1 gp", "1 lbs", "PHB", 50, 50, spanY: 2, imageUri: new Uri("https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png"))));
+            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(2, "Shield", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.Shield }, "8 sp", "0.8 lbs", "PHB", 50, 50, 3, 3, imageUri: new Uri("https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png"))));
+            Catalog._viewModel.Items.Add(new CatalogItem(hub, 50, 50, new InventoryControlLib.Model.CatalogItemModel(3, "Taco", new List<InventoryControlLib.Model.ItemType> { InventoryControlLib.Model.ItemType.FoodAndDrink }, "1 cp", "0.1 lbs", "PHB", 50, 50, isStackable: true, imageUri: new Uri("https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png"))));
             logger.Debug($"< setupInv()");
         }
 
@@ -82,6 +82,19 @@ namespace DNDinventory.ViewModel
                     inventoryContent.Orientation = Orientation.Horizontal;
                 }
                 return inventoryContent;
+            }
+        }
+
+        private ItemCatalog catalog;
+        public ItemCatalog Catalog
+        {
+            get
+            {
+                if(catalog == null)
+                {
+                    catalog = new ItemCatalog();
+                }
+                return catalog;
             }
         }
 

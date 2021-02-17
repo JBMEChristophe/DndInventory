@@ -28,7 +28,8 @@ namespace InventoryControlLib
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private IMessageHub hub;
-        private Guid subscriptionToken;
+        private Guid itemSubscriptionToken;
+        private Guid catalogSubscriptionToken;
 
         private GridManager manager;
 
@@ -65,7 +66,8 @@ namespace InventoryControlLib
                 }
 
                 hub = MessageHub;
-                subscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+                itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+                catalogSubscriptionToken = hub.Subscribe<CatalogItemPositionUpdate>(CatalogItemPositionUpdate);
 
                 hub.Publish(new GridAddUpdate
                 {
@@ -83,7 +85,7 @@ namespace InventoryControlLib
         public void AddItem(int id, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
         {
             logger.Info($"({Name})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
-            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new ItemModel(id, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
+            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new UiItemModel(id, "Test Name", ItemType.Unknown, "No Cost", "No Weight", "UNKNOWN", CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, new Uri(imagePath)));
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
             Grid.SetColumn(item, x);
@@ -157,7 +159,7 @@ namespace InventoryControlLib
             logger.Debug($"({Name})< Item_SplitClicked(sender: {sender})");
         }
 
-        private bool ItemDetailViewModel_SplitClicked(ItemModel sender, int value)
+        private bool ItemDetailViewModel_SplitClicked(UiItemModel sender, int value)
         {
             logger.Debug($"({Name})> ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value})");
             var cell = NextAvailableCell(sender.CellSpanX, sender.CellSpanY);
@@ -285,6 +287,70 @@ namespace InventoryControlLib
                         item.Model.CellY = icellY;
                         item.Transform(p);
                     }
+                }
+            }
+            else
+            {
+                logger.Debug($"Ignored");
+            }
+
+            logger.Debug($"({Name})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
+        }
+
+        private void CatalogItemPositionUpdate(CatalogItemPositionUpdate positionUpdate)
+        {
+            logger.Debug($"({Name})> CatalogItemPositionUpdate(positionUpdate: {positionUpdate})");
+            var item = positionUpdate.Item;
+            var releasePoint = positionUpdate.Position;
+
+            var width = Columns * CellWidth;
+            var height = Rows * CellHeight;
+            var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
+
+            if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
+                && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
+            {
+                var cellX = (releasePoint.X - screenPoint.X) / CellWidth;
+                var cellY = (releasePoint.Y - screenPoint.Y) / CellHeight;
+                var icellX = (int)Math.Floor(cellX);
+                var icellY = (int)Math.Floor(cellY);
+
+                if (cellX % 1 > 0.6)
+                {
+                    icellX++;
+                }
+                if (cellY % 1 > 0.6)
+                {
+                    icellY++;
+                }
+
+                bool canBePlaced = true;
+                Item placedItem = null;
+                foreach (var invItem in Inventory.Children)
+                {
+                    if (invItem is Item)
+                    {
+                        var curItem = invItem as Item;
+                        if (gridCellsOccupied(icellX, icellY, item.Model.CellSpanX, item.Model.CellSpanY, curItem))
+                        {
+                            canBePlaced = false;
+                            placedItem = curItem;
+                            break;
+                        }
+                    }
+                }
+                if (!IsWithinGridBoundary(icellX, icellY, item.Model.CellSpanX, item.Model.CellSpanY))
+                {
+                    canBePlaced = false;
+                }
+
+                if (canBePlaced)
+                {
+                    AddItem(item.Model, icellX, icellY, 1);
+                }
+                else if(placedItem != null && placedItem.Model.ID == item.Model.ID && item.Model.IsStackable)
+                {
+                    placedItem.Model.Quantity += 1;
                 }
             }
             else

@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace InventoryControlLib.ViewModel
 {
-    public delegate bool SplitEvent(ItemModel sender, int value);
+    public delegate bool SplitEvent(UiItemModel sender, int value);
 
     public class ItemSplitViewModel : INotifyPropertyChanged
     {
@@ -18,7 +18,7 @@ namespace InventoryControlLib.ViewModel
 
         public event SplitEvent SplitClicked;
 
-        private ItemModel item;
+        private UiItemModel item;
 
         private int minValue;
         public int MinValue
@@ -136,7 +136,7 @@ namespace InventoryControlLib.ViewModel
             return IsEnabled;
         }
 
-        public ItemSplitViewModel(ItemModel item)
+        public ItemSplitViewModel(UiItemModel item)
         {
             logger.Info($"> ItemSplitViewModel(item: [{item}])");
             MinValue = (item.Quantity > 1) ? 1 : 0;

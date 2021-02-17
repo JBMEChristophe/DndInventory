@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -19,86 +20,53 @@ using System.Windows.Shapes;
 
 namespace InventoryControlLib.View
 {
-    public delegate void MousePressEvent(object sender, Point mousePosition);
-    public delegate void RightClickEvent(object sender);
-
     /// <summary>
     /// Interaction logic for Item.xaml
     /// </summary>
-    public partial class Item : UserControl, INotifyPropertyChanged
+    public partial class CatalogItem : UserControl, INotifyPropertyChanged
     {
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
-        Grid parent;
         Point currentPoint;
         Point startingPoint;
         bool isInDrag = false;
+        Popup popup;
 
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
-        public event RightClickEvent ItemSplitClicked;
 
-        public Item(IMessageHub hub, Grid parent, double width, double height, UiItemModel model = null)
+        public CatalogItem(IMessageHub hub, double width, double height, CatalogItemModel model = null, bool popupItem = false)
         {
             InitializeComponent();
+            if (popupItem)
+            {
+                this.Model = new CatalogItemModel(model, width, height);
+
+                OnPropertyChange("Model");
+                return;
+            }
+
             this.hub = hub;
-            this.parent = parent;
             if (model == null)
             {
-                this.Model = new UiItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", width, height, 0, 0);
+                this.Model = new CatalogItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", width, height, 0, 0);
             }
             else
             {
-                this.Model = new UiItemModel(model, width, height);
+                this.Model = new CatalogItemModel(model, width, height);
             }
+
+            popup = new Popup { Child = new CatalogItem(hub, width, height, model, true), PlacementTarget = this, Placement = PlacementMode.Relative };
+
             OnPropertyChange("Model");
         }
 
-        public Grid GridParent
-        {
-            get
-            {
-                return parent;
-            }
-            set
-            {
-                if(parent != value)
-                {
-                    parent = value;
-                }
-            }
-        }
-
-        public UiItemModel Model { get; }
-
-        DelegateCommand splitCommand;
-        public ICommand SplitCommand
-        {
-            get
-            {
-                if (splitCommand == null)
-                {
-                    splitCommand = new DelegateCommand(ExecuteSplit, CanExecuteSplit);
-                }
-                return splitCommand;
-            }
-        }
-
-        private void ExecuteSplit()
-        {
-            ItemSplitClicked?.Invoke(this);
-        }
-
-        private bool CanExecuteSplit()
-        {
-            return Model.Quantity > 1;
-        }
+        public CatalogItemModel Model { get; }
 
         public void RemoveEvents()
         {
             MouseReleased = null;
             MousePressed = null;
-            ItemSplitClicked = null;
         }
 
         public void Transform(Point p)
@@ -115,7 +83,9 @@ namespace InventoryControlLib.View
             startingPoint = e.GetPosition(this);
             element.CaptureMouse();
             isInDrag = true;
+            Panel.SetZIndex(this, 999);
             e.Handled = true;
+            popup.IsOpen = true;
             MousePressed?.Invoke(this, e.GetPosition(null));
         }
 
@@ -129,7 +99,12 @@ namespace InventoryControlLib.View
                 e.Handled = true;
                 MouseReleased?.Invoke(this, e.GetPosition(null));
                 var itemPosition = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-                hub.Publish(new ItemPositionUpdate { Item = this, Position = itemPosition });
+                hub.Publish(new CatalogItemPositionUpdate { Item = this, Position = itemPosition });
+                Matrix m = this.RenderTransform.Value;
+                m.SetIdentity();
+                this.RenderTransform = new MatrixTransform(m);
+                Panel.SetZIndex(this, 2);
+                popup.IsOpen = false;
             }
         }
 
@@ -184,6 +159,8 @@ namespace InventoryControlLib.View
                 transform.X += currentPointDiff.X - startingPoint.X;
                 transform.Y += currentPointDiff.Y - startingPoint.Y;
                 this.RenderTransform = transform;
+                popup.HorizontalOffset += 1;
+                popup.HorizontalOffset -= 1;
             }
         }
 

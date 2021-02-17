@@ -103,6 +103,7 @@ namespace DNDinventory.ViewModel
                     catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
                     foreach (var item in catalogItems)
                     {
+                        catalogItemModels.Add(item);
                         AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
@@ -110,7 +111,6 @@ namespace DNDinventory.ViewModel
                 {
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
-                        usedDefaultCatalogItemModels.Add(item);
                         AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
@@ -139,7 +139,7 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private List<CatalogItemModel> usedDefaultCatalogItemModels;
+        private List<CatalogItemModel> catalogItemModels;
         private ItemCatalog catalog;
         public ItemCatalog Catalog
         {
@@ -921,7 +921,7 @@ namespace DNDinventory.ViewModel
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
             settingsFileHandler = new SettingsFileHandler();
-            usedDefaultCatalogItemModels = new List<CatalogItemModel>();
+            catalogItemModels = new List<CatalogItemModel>();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;

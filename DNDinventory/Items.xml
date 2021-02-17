@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCatalogItemModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <CatalogItemModel>
-    <ID>0</ID>
+    <ID>2582</ID>
     <Name>Arrow</Name>
     <Type>
       <ItemType>Ammunition</ItemType>
@@ -15,7 +15,7 @@
     <ImageUri>https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png</ImageUri>
   </CatalogItemModel>
   <CatalogItemModel>
-    <ID>1</ID>
+    <ID>2583</ID>
     <Name>Sword</Name>
     <Type>
       <ItemType>SimpleWeapon</ItemType>
@@ -29,7 +29,7 @@
     <ImageUri>https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png</ImageUri>
   </CatalogItemModel>
   <CatalogItemModel>
-    <ID>2</ID>
+    <ID>2584</ID>
     <Name>Shield</Name>
     <Type>
       <ItemType>Shield</ItemType>
@@ -43,7 +43,7 @@
     <ImageUri>https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png</ImageUri>
   </CatalogItemModel>
   <CatalogItemModel>
-    <ID>3</ID>
+    <ID>2585</ID>
     <Name>Taco</Name>
     <Type>
       <ItemType>FoodandDrink</ItemType>

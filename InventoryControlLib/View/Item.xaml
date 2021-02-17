@@ -19,7 +19,24 @@
                 <SolidColorBrush Color="Gray" Opacity="0.5" />
             </Border.Background>
         </Border>
-        <Image Source="{Binding Model.Image}" Width="{Binding Model.Width}" Height="{Binding Model.Height}" ToolTip="{Binding Model.Name}"/>
+        <Image Source="{Binding Model.Image}" Width="{Binding Model.Width}" Height="{Binding Model.Height}">
+            <Image.ToolTip>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="{Binding Model.Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="1" Text="{Binding Model.TypeStr, StringFormat=Type: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="2" Text="{Binding Model.Cost, StringFormat=Cost: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="3" Text="{Binding Model.Weight, StringFormat=Weight: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="4" Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
+                </Grid>
+            </Image.ToolTip>
+        </Image>
         <Border BorderThickness="1" Background="White" CornerRadius="4" Width="25" Height="15" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" >
             <Label Content="{Binding Model.Quantity}" FontSize="9" Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
         </Border>

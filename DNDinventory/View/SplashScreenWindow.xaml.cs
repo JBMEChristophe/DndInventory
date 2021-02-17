@@ -11,25 +11,22 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace DNDinventory.View
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for SplashScreen.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class SplashScreenWindow : Window
     {
-        private readonly MainViewModel _viewModel;
+        private readonly SplashScreenViewModel _viewModel;
 
-        public MainWindow(MainViewModel viewModel)
+        public SplashScreenWindow(SplashScreenViewModel viewModel)
         {
-            InitializeComponent();
             _viewModel = viewModel;
             DataContext = _viewModel;
-
-            Closing += _viewModel.OnWindowClosing;
+            InitializeComponent();
         }
     }
 }

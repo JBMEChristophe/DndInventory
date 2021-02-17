@@ -1,0 +1,49 @@
+﻿<Window x:Class="DNDinventory.View.SplashScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DNDinventory.View"
+        mc:Ignorable="d"
+        ShowInTaskbar="False" 
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" 
+        Background="Transparent" 
+        AllowsTransparency="True"
+        Topmost="True" 
+        Height="300"
+        Width="400"
+        Title="SplashScreen">
+    <Border CornerRadius="8" Margin="15">
+        <Border.Background>
+            <ImageBrush ImageSource="{Binding ImagePath}" 
+                        Stretch="Fill" />
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect Color="#0b7096" 
+                              BlurRadius="10" 
+                              Opacity="0.75" 
+                              ShadowDepth="15" />
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="5"/>
+            </Grid.RowDefinitions>
+            <TextBlock FontSize="40"
+                   FontFamily="Bauhaus 93"
+                   Foreground="White"
+                   Margin="10"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Center"
+                   Text="DnD Inventory">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" />
+                </TextBlock.Effect>
+            </TextBlock>
+            <ProgressBar Grid.Row="1" Value="{Binding Progress}" />
+        </Grid>
+    </Border>
+</Window>

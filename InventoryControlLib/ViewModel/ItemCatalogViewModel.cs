@@ -1,16 +1,20 @@
 ﻿using Easy.MessageHub;
 using InventoryControlLib.Model;
 using InventoryControlLib.View;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
+using Utilities;
 
 namespace InventoryControlLib.ViewModel
 {
@@ -19,6 +23,7 @@ namespace InventoryControlLib.ViewModel
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private CollectionViewSource itemCollection;
         private string filterText;
+        private const string LastUsedFiltersFilePath = "LastUsedFilters.xml";
 
         ObservableCollection<CatalogItem> items;
         public ObservableCollection<CatalogItem> Items 
@@ -54,6 +59,8 @@ namespace InventoryControlLib.ViewModel
             itemCollection.Source = Items;
             itemCollection.Filter += itemCollection_Filter;
             Items.CollectionChanged += Items_CollectionChanged;
+            ExecutedFilters = new ObservableCollection<string>();
+            loadFilters();
             logger.Info("< ItemCatalogViewModel()");
         }
 
@@ -79,6 +86,38 @@ namespace InventoryControlLib.ViewModel
             }
         }
 
+        private ObservableCollection<string> executedFilters;
+        public ObservableCollection<string> ExecutedFilters
+        {
+            get
+            {
+                return executedFilters;
+            }
+            set
+            {
+                executedFilters = value;
+                OnPropertyChange("ExecutedFilters");
+            }
+        }
+
+        private string selectedFilter;
+        public string SelectedFilter
+        {
+            get
+            {
+                return selectedFilter;
+            }
+            set
+            {
+                if (selectedFilter != value)
+                {
+                    selectedFilter = value;
+                    FilterText = selectedFilter;
+                    OnPropertyChange("SelectedFilter");
+                }
+            }
+        }
+
         public string FilterText
         {
             get
@@ -91,6 +130,48 @@ namespace InventoryControlLib.ViewModel
                 this.itemCollection.View.Refresh();
                 OnPropertyChange("FilterText");
                 OnPropertyChange("FilterItemCount");
+            }
+        }
+
+        DelegateCommand saveToLastExecutedCommand;
+        public ICommand SaveToLastExecutedCommand
+        {
+            get
+            {
+                if (saveToLastExecutedCommand == null)
+                {
+                    saveToLastExecutedCommand = new DelegateCommand(ExecuteSaveToLastExecuted);
+                }
+                return saveToLastExecutedCommand;
+            }
+        }
+
+        private void ExecuteSaveToLastExecuted()
+        {
+            logger.Debug("> ExecuteSaveToLastExecuted()");
+            if(!string.IsNullOrEmpty(FilterText.Trim()))
+            {
+                if(ExecutedFilters.Count>15)
+                {
+                    ExecutedFilters.RemoveAt(0);
+                }
+                ExecutedFilters.Add(FilterText.Trim());
+
+                saveFilters();
+            }
+            logger.Debug("< ExecuteSaveToLastExecuted()");
+        }
+
+        private void saveFilters()
+        {
+            XmlHelper<List<string>>.WriteToXml(LastUsedFiltersFilePath, ExecutedFilters.ToList());
+        }
+
+        private void loadFilters()
+        {
+            if (File.Exists(LastUsedFiltersFilePath))
+            {
+                ExecutedFilters = new ObservableCollection<string>(XmlHelper<List<string>>.ReadFromXml(LastUsedFiltersFilePath));
             }
         }
 
@@ -110,7 +191,15 @@ namespace InventoryControlLib.ViewModel
                 var tmp2 = tmp.Select(part => part.Split('='));
                 foreach (var pair in tmp2)
                 {
-                    dict.Add(new KeyValuePair<string, string>(pair[0], pair[1]));
+                    string[] f = { pair[1] };
+                    if (pair[1].Contains("&"))
+                    {
+                        f = pair[1].Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
+                    }
+                    foreach (var filterItem in f)
+                    {
+                        dict.Add(new KeyValuePair<string, string>(pair[0], filterItem));
+                    }
                 }
             }
 
@@ -118,9 +207,9 @@ namespace InventoryControlLib.ViewModel
 
             bool accept = false;
 
+            List<bool> accepts = new List<bool>();
             if (dict.Count > 0)
             {
-                List<bool> accepts = new List<bool>();
                 foreach (var filterItem in dict)
                 {
                     switch (filterItem.Key)
@@ -181,25 +270,37 @@ namespace InventoryControlLib.ViewModel
                             break;
                     }
                 }
-                if(!accepts.Contains(false))
-                {
-                    accept = true;
-                }
             }
             else
             {
-                if (item.Name.ToUpper().Contains(filter))
+                string[] f = { filter };
+                if(filter.Contains("&"))
                 {
-                    accept = true;
+                    f = filter.Split(new[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
                 }
-                if (item.TypeStr.ToUpper().Contains(filter))
+
+                foreach (var filterItem in f)
                 {
-                    accept = true;
+                    var tmpAccept = false;
+                    if (item.Name.ToUpper().Contains(filterItem))
+                    {
+                        tmpAccept = true;
+                    }
+                    if (item.TypeStr.ToUpper().Contains(filterItem))
+                    {
+                        tmpAccept = true;
+                    }
+                    if (item.Source.ToUpper().Contains(filterItem))
+                    {
+                        tmpAccept = true;
+                    }
+                    accepts.Add(tmpAccept);
                 }
-                if (item.Source.ToUpper().Contains(filter))
-                {
-                    accept = true;
-                }
+            }
+
+            if (!accepts.Contains(false))
+            {
+                accept = true;
             }
 
             e.Accepted = accept;

@@ -145,6 +145,10 @@
       <Project>{061395ab-2854-41c7-a3e0-5ae1574d2328}</Project>
       <Name>CustomControls</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Utilities\Utilities.csproj">
+      <Project>{61CDF7CA-B3B3-4FB5-96B7-68EEE9A2B944}</Project>
+      <Name>Utilities</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

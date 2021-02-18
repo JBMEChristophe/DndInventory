@@ -90,7 +90,6 @@
     <Compile Include="View\SplashScreenWindow.xaml.cs">
       <DependentUpon>SplashScreenWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="XmlHelper.cs" />
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -146,6 +145,10 @@
     <ProjectReference Include="..\InventoryControlLib\InventoryControlLib.csproj">
       <Project>{3f2c521f-40e1-4629-a2d7-fdccff25de19}</Project>
       <Name>InventoryControlLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utilities\Utilities.csproj">
+      <Project>{61cdf7ca-b3b3-4fb5-96b7-68eee9a2b944}</Project>
+      <Name>Utilities</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -9,11 +9,17 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBox Grid.Row="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch" />
-        <ListView Grid.Row="1" ItemsSource="{Binding SourceCollection}">
+        <TextBox Grid.Row="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Stretch">
+            <TextBox.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding SaveToLastExecutedCommand}"/>
+            </TextBox.InputBindings>
+        </TextBox>
+        <ComboBox Grid.Row="1" x:Name="cbUsedFilters" ItemsSource="{Binding ExecutedFilters}" SelectedItem="{Binding SelectedFilter}"/>
+        <ListView Grid.Row="2" ItemsSource="{Binding SourceCollection}">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="6" Width="300">
@@ -33,7 +39,7 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
-        <Grid Grid.Row="2" Height="Auto">
+        <Grid Grid.Row="3" Height="Auto">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>

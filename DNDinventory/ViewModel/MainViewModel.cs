@@ -19,6 +19,7 @@ using System.Windows.Controls;
 using System.Windows;
 using InventoryControlLib.View;
 using InventoryControlLib.Model;
+using Utilities;
 
 namespace DNDinventory.ViewModel
 {

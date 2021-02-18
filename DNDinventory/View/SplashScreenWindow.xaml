@@ -12,8 +12,8 @@
         Background="Transparent" 
         AllowsTransparency="True"
         Topmost="True" 
-        Height="500"
-        Width="750"
+        Height="350"
+        Width="600"
         Title="SplashScreen">
     <Border CornerRadius="8" Margin="15">
         <Border.Background>

@@ -82,10 +82,10 @@ namespace InventoryControlLib
             logger.Info($"({Name})< Init()");
         }
 
-        public void AddItem(string id, string name, List<ItemType> types, string cost, string weight, string rarity, string attunement, string properties, string description, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
+        public void AddItem(string id, string name, IList<ItemType> types, string cost, string weight, string rarity, string attunement, string properties, string description, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
         {
             logger.Info($"({Name})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
-            Item item = new Item(hub, Inventory, CellWidth, CellHeight, new UiItemModel(id, name, types, cost, weight, rarity, attunement, properties, description, source, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, imagePath));
+            Item item = new Item(hub, Inventory, new UiItemModel(id, name, types, cost, weight, rarity, attunement, properties, description, source, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, imagePath));
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
             Grid.SetColumn(item, x);

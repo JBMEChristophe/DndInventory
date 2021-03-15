@@ -82,6 +82,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\ItemEditWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\ItemSplitWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -99,6 +103,7 @@
     <Compile Include="Model\UiItemModel.cs" />
     <Compile Include="ViewModel\AmountViewModel.cs" />
     <Compile Include="ViewModel\ItemCatalogViewModel.cs" />
+    <Compile Include="ViewModel\ItemEditViewModel.cs" />
     <Compile Include="View\AmountWindow.xaml.cs">
       <DependentUpon>AmountWindow.xaml</DependentUpon>
     </Compile>
@@ -111,6 +116,9 @@
     <Compile Include="ViewModel\ItemSplitViewModel.cs" />
     <Compile Include="View\ItemCatalog.xaml.cs">
       <DependentUpon>ItemCatalog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ItemEditWindow.xaml.cs">
+      <DependentUpon>ItemEditWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\ItemSplitWindow.xaml.cs">
       <DependentUpon>ItemSplitWindow.xaml</DependentUpon>

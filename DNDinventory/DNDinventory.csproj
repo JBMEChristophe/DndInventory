@@ -167,6 +167,6 @@
     <PreBuildEvent>echo Creating Default Items from CSV
 py -3 $(ProjectDir)..\5eToolScraper.py -i "$(ProjectDir)..\Items.csv"
 echo Copy Default Items if newer
-xcopy $(ProjectDir)..\Items.xml $(ProjectDir)\DefaultItems.xml /D /R /Y /K</PreBuildEvent>
+echo F|xcopy $(ProjectDir)..\Items.xml $(ProjectDir)\DefaultItems.xml /D /R /Y /K</PreBuildEvent>
   </PropertyGroup>
 </Project>

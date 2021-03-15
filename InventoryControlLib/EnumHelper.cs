@@ -38,7 +38,7 @@ namespace InventoryControlLib
             return field == null ? default(T) : (T)field.Field.GetRawConstantValue();
         }
 
-        public static List<string> GetDescriptionListFromEnumList<T>(List<T> values)
+        public static List<string> GetDescriptionListFromEnumList<T>(IList<T> values)
         {
             if (typeof(T).IsEnum)
             {

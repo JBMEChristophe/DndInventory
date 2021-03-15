@@ -1,5 +1,6 @@
 ﻿using Easy.MessageHub;
 using InventoryControlLib.Model;
+using InventoryControlLib.ViewModel;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,8 @@ namespace InventoryControlLib.View
     /// </summary>
     public partial class CatalogItem : UserControl, INotifyPropertyChanged
     {
+        public delegate void SaveCatalogEvent(object sender);
+
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
@@ -35,6 +38,7 @@ namespace InventoryControlLib.View
 
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
+        public event SaveCatalogEvent SaveCatalog;
 
         public CatalogItem(IMessageHub hub, CatalogItemModel model = null, bool popupItem = false)
         {
@@ -55,7 +59,7 @@ namespace InventoryControlLib.View
             }
             else
             {
-                this.Model = new CatalogItemModel(model);
+                this.Model = model;
             }
 
             popup = new Popup { Child = new CatalogItem(hub, model, true), 
@@ -68,6 +72,32 @@ namespace InventoryControlLib.View
         }
 
         public CatalogItemModel Model { get; }
+
+        DelegateCommand editCommand;
+        public ICommand EditCommand
+        {
+            get
+            {
+                if (editCommand == null)
+                {
+                    editCommand = new DelegateCommand(ExecuteEdit);
+                }
+                return editCommand;
+            }
+        }
+
+        private void ExecuteEdit()
+        {
+            logger.Info($"> ExecuteEdit()");
+
+            var viewModel = new ItemEditViewModel(Model);
+            var editWindow = new ItemEditWindow(viewModel);
+            editWindow.ShowDialog();
+
+            SaveCatalog?.Invoke(this);
+
+            logger.Info($"< ExecuteEdit()");
+        }
 
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {

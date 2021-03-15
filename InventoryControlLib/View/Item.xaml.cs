@@ -38,18 +38,18 @@ namespace InventoryControlLib.View
         public event MousePressEvent MousePressed;
         public event RightClickEvent ItemSplitClicked;
 
-        public Item(IMessageHub hub, Grid parent, double width, double height, UiItemModel model = null)
+        public Item(IMessageHub hub, Grid parent, UiItemModel model = null)
         {
             InitializeComponent();
             this.hub = hub;
             this.parent = parent;
             if (model == null)
             {
-                this.Model = new UiItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", width, height, 0, 0);
+                this.Model = new UiItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", 0, 0, 0, 0);
             }
             else
             {
-                this.Model = new UiItemModel(model, width, height);
+                this.Model = model;
             }
             OnPropertyChange("Model");
         }

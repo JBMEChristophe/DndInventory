@@ -28,7 +28,6 @@ namespace DNDinventory.ViewModel
         private const string version = "0.1.0";
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private List<CatalogItemModel> catalogItems;
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
@@ -36,6 +35,8 @@ namespace DNDinventory.ViewModel
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
+
+        private const string catalogItemsPath = "Catalogs/Items.xml";
 
         private bool serverRunning;
 
@@ -56,8 +57,9 @@ namespace DNDinventory.ViewModel
             logger.Debug($"< AddInventory({name}, {size})");
         }
 
-        public void AddItemToCatalog(CatalogItemModel item, ref double index, double totalCount, ref double progress, IProgress<double> progressUpdate)
+        public void AddItemToCatalog(CatalogItemModel item)
         {
+            logger.Debug($"> AddItemToCatalog(item:[{item}])");
             item.Width = 50 * item.CellSpanX;
             item.Height = 50 * item.CellSpanY;
             if (string.IsNullOrEmpty(item.ImageUri))
@@ -67,8 +69,15 @@ namespace DNDinventory.ViewModel
 
             Application.Current.Dispatcher.Invoke(() =>
             {
-                Catalog._viewModel.Items.Add(new CatalogItem(hub, item));
+                var tmp = new CatalogItem(hub, item);
+                tmp.SaveCatalog += SaveCatalog;
+                Catalog._viewModel.Items.Add(tmp);
             });
+            logger.Debug($"< AddItemToCatalog(item:[{item}])");
+        }
+
+        private void UpdateProcess(ref double index, double totalCount, ref double progress, IProgress<double> progressUpdate)
+        {
             index++;
             if (index % 10 == 0)
             {
@@ -76,6 +85,13 @@ namespace DNDinventory.ViewModel
                 progressUpdate.Report(progress);
                 System.Threading.Thread.Sleep(1);
             }
+        }
+
+        private void SaveCatalog(object sender)
+        {
+            logger.Info($"> SaveCatalog()");
+            XmlHelper<List<CatalogItemModel>>.WriteToXml(catalogItemsPath, catalogItemModels);
+            logger.Info($"> SaveCatalog()");
         }
 
         public Task<bool> SetupInv(IProgress<double> progressUpdate)
@@ -98,27 +114,27 @@ namespace DNDinventory.ViewModel
                 List<CatalogItemModel> catalogItems = new List<CatalogItemModel>();
 
                 var defaultCatalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
-                string catalogItemsPath = "Catalogs/Items.xml";
                 if (File.Exists(catalogItemsPath))
                 {
                     catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
                     foreach (var item in catalogItems)
                     {
                         catalogItemModels.Add(item);
-                        AddItemToCatalog(item, ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
+                        AddItemToCatalog(item);
+                        UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
                 foreach (var item in defaultCatalogItems)
                 {
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
-                        AddItemToCatalog(item, ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
+                        AddItemToCatalog(item);
+                        UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
                 progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;
                 progressUpdate.Report(progress);
 
-                //XmlHelper<List<CatalogItemModel>>.WriteToXml("Items.xml", catalogItems);
                 logger.Debug($"< setupInv()");
                 return true;
             });
@@ -149,9 +165,16 @@ namespace DNDinventory.ViewModel
                 if(catalog == null)
                 {
                     catalog = new ItemCatalog();
+                    catalog._viewModel.ItemAdded += ItemAdded;
                 }
                 return catalog;
             }
+        }
+
+        private void ItemAdded(object sender, CatalogItemModel model)
+        {
+            catalogItemModels.Add(model);
+            AddItemToCatalog(model);
         }
 
         public IMessageHub Hub
@@ -917,7 +940,6 @@ namespace DNDinventory.ViewModel
         {
             logger.Info($"> MainViewModel()");
             transferClients = new List<TransferClient>();
-            catalogItems = new List<CatalogItemModel>();
             hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;

@@ -18,12 +18,16 @@ using Utilities;
 
 namespace InventoryControlLib.ViewModel
 {
+    public delegate void NewItemEvent(object sender, CatalogItemModel model);
+
     public class ItemCatalogViewModel : INotifyPropertyChanged
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private CollectionViewSource itemCollection;
         private string filterText;
         private const string LastUsedFiltersFilePath = "LastUsedFilters.xml";
+
+        public event NewItemEvent ItemAdded;
 
         ObservableCollection<CatalogItem> items;
         public ObservableCollection<CatalogItem> Items 
@@ -49,6 +53,32 @@ namespace InventoryControlLib.ViewModel
             {
                 return this.itemCollection.View;
             }
+        }
+
+        DelegateCommand createNewItemCommand;
+        public ICommand CreateNewItemCommand
+        {
+            get
+            {
+                if (createNewItemCommand == null)
+                {
+                    createNewItemCommand = new DelegateCommand(ExecuteCreateNewItem);
+                }
+                return createNewItemCommand;
+            }
+        }
+
+        private void ExecuteCreateNewItem()
+        {
+            logger.Info($"> ExecuteCreateNewItem()");
+
+            var viewModel = new ItemEditViewModel(new CatalogItemModel("CUSTOM_New", "New", ItemType.Unknown, "", "", "", "", "", "", "CUSTOM", 50, 50));
+            var editWindow = new ItemEditWindow(viewModel);
+            editWindow.ShowDialog();
+
+            ItemAdded?.Invoke(this, viewModel.Model);
+
+            logger.Info($"< ExecuteCreateNewItem()");
         }
 
         public ItemCatalogViewModel()

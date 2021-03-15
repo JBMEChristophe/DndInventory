@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:InventoryControlLib.View"
              mc:Ignorable="d" 
+             x:Name="ItemCatalogRoot"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <Grid.RowDefinitions>
@@ -37,6 +38,11 @@
                             <TextBlock Text="{Binding Model.Attunement, StringFormat=Attunement: {0}}" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
                         </StackPanel>
+                        <Grid.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Edit" Command="{Binding EditCommand}" />
+                            </ContextMenu>
+                        </Grid.ContextMenu>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
@@ -45,9 +51,11 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="{Binding ItemCount}" ContentStringFormat="Items: {0}"/>
-            <Label Grid.Column="1" Content="{Binding FilterItemCount}" ContentStringFormat="Filtered items: {0}"/>
+            <Button Margin="2" Content="Create New Item" Command="{Binding CreateNewItemCommand}" />
+            <Label Grid.Column="1" Content="{Binding ItemCount}" ContentStringFormat="Items: {0}"/>
+            <Label Grid.Column="2" Content="{Binding FilterItemCount}" ContentStringFormat="Filtered items: {0}"/>
         </Grid>
     </Grid>
 </UserControl>

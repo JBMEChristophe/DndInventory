@@ -45,7 +45,7 @@ namespace InventoryControlLib.View
             this.parent = parent;
             if (model == null)
             {
-                this.Model = new UiItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", width, height, 0, 0);
+                this.Model = new UiItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", width, height, 0, 0);
             }
             else
             {

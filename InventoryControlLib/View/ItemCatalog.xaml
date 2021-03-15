@@ -30,9 +30,11 @@
                         <ContentControl Content="{Binding .}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="15,0,0,0">
                             <TextBlock Text="{Binding Model.Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.Rarity, StringFormat=Rarity: {0}}" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Model.TypeStr, StringFormat=Type: {0}}" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Model.Cost, StringFormat=Cost: {0}}" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Model.Weight, StringFormat=Weight: {0}}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Model.Attunement, StringFormat=Attunement: {0}}" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>

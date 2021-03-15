@@ -51,7 +51,7 @@ namespace InventoryControlLib.View
             this.hub = hub;
             if (model == null)
             {
-                this.Model = new CatalogItemModel(0, "No Name", ItemType.Unknown, "No Cost", "No Weight", "UNKOWN", 50, 50, 0, 0);
+                this.Model = new CatalogItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", 50, 50, 0, 0);
             }
             else
             {

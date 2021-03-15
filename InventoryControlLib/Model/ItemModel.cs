@@ -16,12 +16,32 @@ namespace InventoryControlLib.Model
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        public int ID
+        public string ID
         {
             get; set;
         }
 
         public string Name
+        {
+            get; set;
+        }
+
+        public string Rarity
+        { 
+            get; set;
+        }
+
+        public string Attunement
+        {
+            get; set;
+        }
+
+        public string Properties
+        {
+            get; set;
+        }
+
+        public string Description
         {
             get; set;
         }
@@ -145,7 +165,7 @@ namespace InventoryControlLib.Model
         {
         }
 
-        public ItemModel(int id, string name, List<ItemType> type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
+        public ItemModel(string id, string name, List<ItemType> type, string cost, string weight, string rarity, string attunement, string properties, string description, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
         {
             logger.Debug($"> ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
             ID = id;
@@ -153,6 +173,10 @@ namespace InventoryControlLib.Model
             Type = type;
             Cost = cost;
             Weight = weight;
+            Rarity = rarity;
+            Attunement = attunement;
+            Properties = properties;
+            Description = description;
             CellSpanX = spanX;
             CellSpanY = spanY;
             Source = source;
@@ -163,8 +187,8 @@ namespace InventoryControlLib.Model
             logger.Debug($"< ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
         }
 
-        public ItemModel(int id, string name, ItemType type, string cost, string weight, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
-            :this(id, name, new List<ItemType> { type }, cost, weight, source, width, height, spanX, spanY, isStackable, image)
+        public ItemModel(string id, string name, ItemType type, string cost, string weight, string rarity, string attunement, string properties, string description, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = null)
+            :this(id, name, new List<ItemType> { type }, cost, weight, rarity, attunement, properties, description, source, width, height, spanX, spanY, isStackable, image)
         { }
 
         public override string ToString()

@@ -20,7 +20,7 @@ namespace InventoryControlLib.Model
         [Description("Artisan's Tools")]
         ArtisansTools,
         [Description("Food and Drink")]
-        FoodandDrink,
+        FoodAndDrink,
         [Description("Treasure")]
         Treasure,
         [Description("Spellcasting Focus")]
@@ -48,19 +48,15 @@ namespace InventoryControlLib.Model
         [Description("Instrument")]
         Instrument,
         [Description("Tack and Harness")]
-        TackandHarness,
+        TackAndHarness,
         [Description("Potion")]
         Potion,
         [Description("Renaissance")]
         Renaissance,
         [Description("Explosive")]
         Explosive,
-        [Description("Vehicle (Air)")]
-        VehicleAir,
-        [Description("Vehicle (Land)")]
-        VehicleLand,
-        [Description("Vehicle (Water)")]
-        VehicleWater,
+        [Description("Vehicle")]
+        Vehicle,
         [Description("Heavy Armor")]
         HeavyArmor,
         [Description("Medium Armor")]
@@ -69,6 +65,8 @@ namespace InventoryControlLib.Model
         LightArmor,
         [Description("Shield")]
         Shield,
+        [Description("Armor")]
+        Armor,
         [Description("Gaming Set")]
         GamingSet,
         [Description("Tools")]

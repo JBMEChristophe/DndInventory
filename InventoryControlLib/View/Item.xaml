@@ -28,12 +28,16 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="{Binding Model.Name, StringFormat=Name: {0}}" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Row="1" Text="{Binding Model.TypeStr, StringFormat=Type: {0}}" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Row="2" Text="{Binding Model.Cost, StringFormat=Cost: {0}}" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Row="3" Text="{Binding Model.Weight, StringFormat=Weight: {0}}" TextWrapping="Wrap"/>
-                    <TextBlock Grid.Row="4" Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="1" Text="{Binding Model.Rarity, StringFormat=Rarity: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="2" Text="{Binding Model.TypeStr, StringFormat=Type: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="3" Text="{Binding Model.Cost, StringFormat=Cost: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="4" Text="{Binding Model.Weight, StringFormat=Weight: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="5" Text="{Binding Model.Attunement, StringFormat=Attunement: {0}}" TextWrapping="Wrap"/>
+                    <TextBlock Grid.Row="6" Text="{Binding Model.Source, StringFormat=Source: {0}}" TextWrapping="Wrap"/>
                 </Grid>
             </Image.ToolTip>
         </Image>

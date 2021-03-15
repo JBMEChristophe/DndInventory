@@ -97,7 +97,7 @@ namespace DNDinventory.ViewModel
                 double progress = 0.0;
                 List<CatalogItemModel> catalogItems = new List<CatalogItemModel>();
 
-                var defealtCatalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
+                var defaultCatalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
                 string catalogItemsPath = "Catalogs/Items.xml";
                 if (File.Exists(catalogItemsPath))
                 {
@@ -105,14 +105,14 @@ namespace DNDinventory.ViewModel
                     foreach (var item in catalogItems)
                     {
                         catalogItemModels.Add(item);
-                        AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
+                        AddItemToCatalog(item, ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
-                foreach (var item in defealtCatalogItems)
+                foreach (var item in defaultCatalogItems)
                 {
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
-                        AddItemToCatalog(item, ref index, catalogItems.Count + defealtCatalogItems.Count, ref progress, progressUpdate);
+                        AddItemToCatalog(item, ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
                 }
                 progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;

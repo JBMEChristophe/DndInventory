@@ -20,7 +20,7 @@
             </TextBox.InputBindings>
         </TextBox>
         <ComboBox Grid.Row="1" x:Name="cbUsedFilters" ItemsSource="{Binding ExecutedFilters}" SelectedItem="{Binding SelectedFilter}"/>
-        <ListView Grid.Row="2" ItemsSource="{Binding SourceCollection}">
+        <ListView Grid.Row="2" ItemsSource="{Binding SourceCollection}" SelectedItem="{Binding SelectedCatalogItem}">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="6" Width="300">
@@ -41,6 +41,7 @@
                         <Grid.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="Edit" Command="{Binding EditCommand}" />
+                                <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
                             </ContextMenu>
                         </Grid.ContextMenu>
                     </Grid>
@@ -52,10 +53,12 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Button Margin="2" Content="Create New Item" Command="{Binding CreateNewItemCommand}" />
-            <Label Grid.Column="1" Content="{Binding ItemCount}" ContentStringFormat="Items: {0}"/>
-            <Label Grid.Column="2" Content="{Binding FilterItemCount}" ContentStringFormat="Filtered items: {0}"/>
+            <Button Grid.Column="1" Margin="2" Content="Duplicate Item" Command="{Binding DuplicateItemCommand}" />
+            <Label Grid.Column="2" Content="{Binding ItemCount}" ContentStringFormat="Items: {0}"/>
+            <Label Grid.Column="3" Content="{Binding FilterItemCount}" ContentStringFormat="Filtered items: {0}"/>
         </Grid>
     </Grid>
 </UserControl>

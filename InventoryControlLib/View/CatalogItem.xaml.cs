@@ -26,7 +26,7 @@ namespace InventoryControlLib.View
     /// </summary>
     public partial class CatalogItem : UserControl, INotifyPropertyChanged
     {
-        public delegate void SaveCatalogEvent(object sender);
+        public delegate void CatalogEvent(CatalogItem sender);
 
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IMessageHub hub;
@@ -38,7 +38,8 @@ namespace InventoryControlLib.View
 
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
-        public event SaveCatalogEvent SaveCatalog;
+        public event CatalogEvent SaveCatalog;
+        public event CatalogEvent DeleteCatalog;
 
         public CatalogItem(IMessageHub hub, CatalogItemModel model = null, bool popupItem = false)
         {
@@ -99,6 +100,28 @@ namespace InventoryControlLib.View
             logger.Info($"< ExecuteEdit()");
         }
 
+        DelegateCommand deleteCommand;
+        public ICommand DeleteCommand
+        {
+            get
+            {
+                if (deleteCommand == null)
+                {
+                    deleteCommand = new DelegateCommand(Executedelete);
+                }
+                return deleteCommand;
+            }
+        }
+
+        private void Executedelete()
+        {
+            logger.Info($"> Executedelete()");
+
+            DeleteCatalog?.Invoke(this);
+
+            logger.Info($"< Executedelete()");
+        }
+
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var element = sender as FrameworkElement;
@@ -107,7 +130,10 @@ namespace InventoryControlLib.View
             isInDrag = true;
             Panel.SetZIndex(this, 999);
             e.Handled = true;
-            popup.IsOpen = true;
+            if (popup != null)
+            {
+                popup.IsOpen = true;
+            }
             MousePressed?.Invoke(this, e.GetPosition(null));
         }
 

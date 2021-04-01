@@ -21,7 +21,7 @@
                         Stretch="Fill" />
         </Border.Background>
         <Border.Effect>
-            <DropShadowEffect Color="#0b7096" 
+            <DropShadowEffect Color="{Binding ShadowColor}" 
                               BlurRadius="10" 
                               Opacity="0.75" 
                               ShadowDepth="15" />

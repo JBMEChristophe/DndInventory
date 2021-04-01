@@ -93,6 +93,7 @@ namespace InventoryControlLib
             item.MouseReleased += Item_MouseReleased;
             item.MousePressed += Item_MousePressed;
             item.ItemSplitClicked += Item_SplitClicked;
+            item.ItemDeleteClicked += Item_ItemDeleteClicked;
             Inventory.Children.Add(item); 
             logger.Info($"({Name})< AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
         }
@@ -100,6 +101,15 @@ namespace InventoryControlLib
         private void AddItem(ItemModel item, int x, int y, int quantity)
         {
             AddItem(item.ID, item.Name, item.Type, item.Cost, item.Weight, item.Rarity, item.Attunement, item.Properties, item.Description, item.Source, x, y, item.ImageUri, item.CellSpanX, item.CellSpanY, quantity, item.IsStackable);
+        }
+
+        private void Item_ItemDeleteClicked(Item sender)
+        {
+            if (sender.GridParent.Children.Contains(sender))
+            {
+                sender.GridParent.Children.Remove(sender);
+                sender.RemoveEvents();
+            }
         }
 
         private Point? NextAvailableCell(int spanX, int spanY)
@@ -281,6 +291,7 @@ namespace InventoryControlLib
                         item.MouseReleased += Item_MouseReleased;
                         item.MousePressed += Item_MousePressed;
                         item.ItemSplitClicked += Item_SplitClicked;
+                        item.ItemDeleteClicked += Item_ItemDeleteClicked;
                         Inventory.Children.Add(item);
                         item.GridParent = Inventory;
                         item.Model.CellX = icellX;

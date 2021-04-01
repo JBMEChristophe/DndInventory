@@ -40,9 +40,7 @@ namespace Utilities
 
         public static string GetRelativePathFromApplication(string path)
         {
-
             return MakeRelativePath(AppDomain.CurrentDomain.BaseDirectory, path);
-            //return MakeRelativePath(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase), path);
         }
     }
 }

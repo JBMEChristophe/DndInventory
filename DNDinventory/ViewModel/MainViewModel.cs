@@ -70,8 +70,7 @@ namespace DNDinventory.ViewModel
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var tmp = new CatalogItem(hub, item);
-                tmp.SaveCatalog += SaveCatalog;
-                Catalog._viewModel.Items.Add(tmp);
+                Catalog._viewModel.AddItem(tmp);
             });
             logger.Debug($"< AddItemToCatalog(item:[{item}])");
         }
@@ -87,7 +86,7 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        private void SaveCatalog(object sender)
+        private void SaveCatalog(object sender = null)
         {
             logger.Info($"> SaveCatalog()");
             XmlHelper<List<CatalogItemModel>>.WriteToXml(catalogItemsPath, catalogItemModels);
@@ -128,6 +127,7 @@ namespace DNDinventory.ViewModel
                 {
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
+                        item.IsDefault = true;
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
@@ -166,8 +166,21 @@ namespace DNDinventory.ViewModel
                 {
                     catalog = new ItemCatalog();
                     catalog._viewModel.ItemAdded += ItemAdded;
+                    catalog._viewModel.SaveCatalog += SaveCatalog;
+                    catalog._viewModel.DeleteCatalog += _viewModel_DeleteCatalog;
                 }
                 return catalog;
+            }
+        }
+
+        private void _viewModel_DeleteCatalog(object sender)
+        {
+            if (sender is CatalogItem)
+            {
+                var item = sender as CatalogItem;
+
+                catalogItemModels.Remove(item.Model);
+                SaveCatalog();
             }
         }
 
@@ -175,6 +188,7 @@ namespace DNDinventory.ViewModel
         {
             catalogItemModels.Add(model);
             AddItemToCatalog(model);
+            SaveCatalog();
         }
 
         public IMessageHub Hub

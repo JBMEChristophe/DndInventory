@@ -27,6 +27,9 @@ namespace InventoryControlLib.View
     /// </summary>
     public partial class Item : UserControl, INotifyPropertyChanged
     {
+        public delegate void ItemEvent(Item sender);
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
         Grid parent;
@@ -37,6 +40,7 @@ namespace InventoryControlLib.View
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
         public event RightClickEvent ItemSplitClicked;
+        public event ItemEvent ItemDeleteClicked;
 
         public Item(IMessageHub hub, Grid parent, UiItemModel model = null)
         {
@@ -52,6 +56,28 @@ namespace InventoryControlLib.View
                 this.Model = model;
             }
             OnPropertyChange("Model");
+        }
+
+        DelegateCommand deleteCommand;
+        public ICommand DeleteCommand
+        {
+            get
+            {
+                if (deleteCommand == null)
+                {
+                    deleteCommand = new DelegateCommand(Executedelete);
+                }
+                return deleteCommand;
+            }
+        }
+
+        private void Executedelete()
+        {
+            logger.Info($"> Executedelete()");
+
+            ItemDeleteClicked?.Invoke(this);
+
+            logger.Info($"< Executedelete()");
         }
 
         public Grid GridParent
@@ -99,6 +125,7 @@ namespace InventoryControlLib.View
             MouseReleased = null;
             MousePressed = null;
             ItemSplitClicked = null;
+            ItemDeleteClicked = null;
         }
 
         public void Transform(Point p)

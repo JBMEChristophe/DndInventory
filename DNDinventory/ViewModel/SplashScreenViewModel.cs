@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace DNDinventory.ViewModel
 {
@@ -14,6 +17,14 @@ namespace DNDinventory.ViewModel
         public SplashScreenViewModel()
         {
             logger.Info(">< SplashScreenViewModel()");
+            var randomGen = new Random();
+            var images = Directory.GetFiles("Images/SplashScreen");
+            var random = randomGen.Next(0, images.Length);
+            Bitmap img = new Bitmap(images[random]);
+            var color = img.GetPixel(randomGen.Next(img.Width), randomGen.Next(img.Height));
+            ShadowColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+            ImagePath = new Uri(images[random], UriKind.Relative);
+
             progress = 0;
         }
 
@@ -34,9 +45,38 @@ namespace DNDinventory.ViewModel
             }
         }
 
+        private System.Windows.Media.Color shadowColor;
+        public System.Windows.Media.Color ShadowColor
+        {
+            get 
+            { 
+                return shadowColor; 
+            }
+            set 
+            {
+                if (shadowColor != value)
+                {
+                    shadowColor = value;
+                    OnPropertyChange("ShadowColor");
+                }
+            }
+        }
+
+        Uri imagePath;
         public Uri ImagePath
         {
-            get { return new Uri("Images/SplashScreen.png", UriKind.Relative); }
+            get 
+            {
+                return imagePath; 
+            }
+            set
+            {
+                if (imagePath != value)
+                {
+                    imagePath = value;
+                    OnPropertyChange("ImagePath");
+                }
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -15,6 +15,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using Utilities;
+using static InventoryControlLib.View.CatalogItem;
 
 namespace InventoryControlLib.ViewModel
 {
@@ -28,6 +29,8 @@ namespace InventoryControlLib.ViewModel
         private const string LastUsedFiltersFilePath = "LastUsedFilters.xml";
 
         public event NewItemEvent ItemAdded;
+        public event CatalogEvent SaveCatalog;
+        public event CatalogEvent DeleteCatalog;
 
         ObservableCollection<CatalogItem> items;
         public ObservableCollection<CatalogItem> Items 
@@ -45,6 +48,54 @@ namespace InventoryControlLib.ViewModel
                     OnPropertyChange("ItemCount");
                 }
             }
+        }
+
+        CatalogItem selectedCatalogItem;
+        public CatalogItem SelectedCatalogItem
+        {
+            get
+            {
+                return selectedCatalogItem;
+            }
+            set
+            {
+                if (selectedCatalogItem != value)
+                {
+                    selectedCatalogItem = value;
+                    OnPropertyChange("SelectedCatalogItem");
+                    duplicateItemCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public void AddItem(CatalogItem item)
+        {
+            item.SaveCatalog += Item_SaveCatalog;
+            item.DeleteCatalog += Item_DeleteCatalog;
+            Items.Add(item);
+        }
+
+        private void Item_DeleteCatalog(CatalogItem sender)
+        {
+            if (sender is CatalogItem)
+            {
+                var item = sender as CatalogItem;
+
+                if (!item.Model.IsDefault)
+                {
+                    var result = MessageBox.Show($"Are you sure you want to delete {item.Model.Name}?", "Delete?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        items.Remove(item);
+                        DeleteCatalog?.Invoke(sender);
+                    }
+                }
+            }
+        }
+
+        private void Item_SaveCatalog(CatalogItem sender)
+        {
+            SaveCatalog?.Invoke(sender);
         }
 
         public ICollectionView SourceCollection
@@ -81,9 +132,44 @@ namespace InventoryControlLib.ViewModel
             logger.Info($"< ExecuteCreateNewItem()");
         }
 
+        DelegateCommand duplicateItemCommand;
+        public ICommand DuplicateItemCommand
+        {
+            get
+            {
+                if (duplicateItemCommand == null)
+                {
+                    duplicateItemCommand = new DelegateCommand(ExecuteDuplicateItem, CanExecuteDuplicateItem);
+                }
+                return duplicateItemCommand;
+            }
+        }
+
+        private void ExecuteDuplicateItem()
+        {
+            logger.Info($"> ExecuteDuplicateItem()");
+
+            var itemModel = new CatalogItemModel(SelectedCatalogItem.Model);
+            itemModel.Name += " (Copy)";
+            itemModel.ID += "_(Copy)";
+            var viewModel = new ItemEditViewModel(itemModel);
+            var editWindow = new ItemEditWindow(viewModel);
+            editWindow.ShowDialog();
+
+            ItemAdded?.Invoke(this, viewModel.Model);
+
+            logger.Info($"< ExecuteDuplicateItem()");
+        }
+
+        private bool CanExecuteDuplicateItem()
+        {
+            return (SelectedCatalogItem != null);
+        }
+
         public ItemCatalogViewModel()
         {
             logger.Info("> ItemCatalogViewModel()");
+            SelectedCatalogItem = null;
             Items = new ObservableCollection<CatalogItem>();
             itemCollection = new CollectionViewSource();
             itemCollection.Source = Items;

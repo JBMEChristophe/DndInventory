@@ -16,7 +16,11 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <cc:NumericUpDown Margin="4" Value="{Binding Value, Mode=TwoWay}" MinValue="{Binding MinValue}" MaxValue="{Binding MaxValue}" StartValue="{Binding MinValue}" IsEnabled="{Binding IsEnabled}"/>
+        <cc:NumericUpDown Margin="4" Value="{Binding Value, Mode=TwoWay}" MinValue="{Binding MinValue}" MaxValue="{Binding MaxValue}" StartValue="{Binding MinValue}" IsEnabled="{Binding IsEnabled}">
+            <cc:NumericUpDown.InputBindings>
+                <KeyBinding Key="Enter" Command="{Binding SplitCommand}"/>
+            </cc:NumericUpDown.InputBindings>
+        </cc:NumericUpDown>
         <Button Grid.Column="2" Margin="4" Content="Split" Command="{Binding SplitCommand}" />
     </Grid>
 </Window>

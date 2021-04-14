@@ -20,6 +20,17 @@ namespace InventoryControlLib
         }
     }
 
+    class CatalogItemPositionUpdate
+    {
+        public CatalogItem Item { get; set; }
+        public Point Position { get; set; }
+
+        public override string ToString()
+        {
+            return $"item: [{Item}]; position: [{Position}]";
+        }
+    }
+
     class UpdateGrid
     {
         public Grid Grid { get; set; }

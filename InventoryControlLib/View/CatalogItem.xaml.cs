@@ -1,5 +1,6 @@
 ﻿using Easy.MessageHub;
 using InventoryControlLib.Model;
+using InventoryControlLib.ViewModel;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -19,43 +21,83 @@ using System.Windows.Shapes;
 
 namespace InventoryControlLib.View
 {
-    public delegate void MousePressEvent(object sender, Point mousePosition);
-    public delegate void RightClickEvent(object sender);
-
     /// <summary>
     /// Interaction logic for Item.xaml
     /// </summary>
-    public partial class Item : UserControl, INotifyPropertyChanged
+    public partial class CatalogItem : UserControl, INotifyPropertyChanged
     {
-        public delegate void ItemEvent(Item sender);
-        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public delegate void CatalogEvent(CatalogItem sender);
 
+        private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IMessageHub hub;
         TranslateTransform transform = new TranslateTransform();
-        Grid parent;
         Point currentPoint;
         Point startingPoint;
         bool isInDrag = false;
+        Popup popup;
 
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
-        public event RightClickEvent ItemSplitClicked;
-        public event ItemEvent ItemDeleteClicked;
+        public event CatalogEvent SaveCatalog;
+        public event CatalogEvent DeleteCatalog;
 
-        public Item(IMessageHub hub, Grid parent, UiItemModel model = null)
+        public CatalogItem(IMessageHub hub, CatalogItemModel model = null, bool popupItem = false)
         {
+            logger.Info($"> CatalogItem(hub: {hub}, model: {model}, popup: {popupItem})");
             InitializeComponent();
+            if (popupItem)
+            {
+                this.Model = new CatalogItemModel(model);
+
+                OnPropertyChange("Model");
+                return;
+            }
+
             this.hub = hub;
-            this.parent = parent;
             if (model == null)
             {
-                this.Model = new UiItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", 0, 0, 0, 0);
+                this.Model = new CatalogItemModel("No_ID", "No Name", ItemType.Unknown, "No Cost", "No Weight", "No Rarity", "No Attunement", "No Properties", "No Description", "UNKOWN", 50, 50, 0, 0);
             }
             else
             {
                 this.Model = model;
             }
+
+            popup = new Popup { Child = new CatalogItem(hub, model, true), 
+                PlacementTarget = this, 
+                Placement = PlacementMode.Relative, 
+                AllowsTransparency = true };
+
             OnPropertyChange("Model");
+            logger.Info($"< CatalogItem(hub: {hub}, model: {model}, popup: {popupItem})");
+        }
+
+        public CatalogItemModel Model { get; }
+
+        DelegateCommand editCommand;
+        public ICommand EditCommand
+        {
+            get
+            {
+                if (editCommand == null)
+                {
+                    editCommand = new DelegateCommand(ExecuteEdit);
+                }
+                return editCommand;
+            }
+        }
+
+        private void ExecuteEdit()
+        {
+            logger.Info($"> ExecuteEdit()");
+
+            var viewModel = new ItemEditViewModel(Model);
+            var editWindow = new ItemEditWindow(viewModel);
+            editWindow.ShowDialog();
+
+            SaveCatalog?.Invoke(this);
+
+            logger.Info($"< ExecuteEdit()");
         }
 
         DelegateCommand deleteCommand;
@@ -75,65 +117,9 @@ namespace InventoryControlLib.View
         {
             logger.Info($"> Executedelete()");
 
-            ItemDeleteClicked?.Invoke(this);
+            DeleteCatalog?.Invoke(this);
 
             logger.Info($"< Executedelete()");
-        }
-
-        public Grid GridParent
-        {
-            get
-            {
-                return parent;
-            }
-            set
-            {
-                if(parent != value)
-                {
-                    parent = value;
-                }
-            }
-        }
-
-        public UiItemModel Model { get; }
-
-        DelegateCommand splitCommand;
-        public ICommand SplitCommand
-        {
-            get
-            {
-                if (splitCommand == null)
-                {
-                    splitCommand = new DelegateCommand(ExecuteSplit, CanExecuteSplit);
-                }
-                return splitCommand;
-            }
-        }
-
-        private void ExecuteSplit()
-        {
-            ItemSplitClicked?.Invoke(this);
-        }
-
-        private bool CanExecuteSplit()
-        {
-            return Model.Quantity > 1;
-        }
-
-        public void RemoveEvents()
-        {
-            MouseReleased = null;
-            MousePressed = null;
-            ItemSplitClicked = null;
-            ItemDeleteClicked = null;
-        }
-
-        public void Transform(Point p)
-        {
-            var screenPoint = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-            transform.X += (p.X - screenPoint.X);
-            transform.Y += (p.Y - screenPoint.Y);
-            this.RenderTransform = transform;
         }
 
         private void UserControl_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -142,7 +128,12 @@ namespace InventoryControlLib.View
             startingPoint = e.GetPosition(this);
             element.CaptureMouse();
             isInDrag = true;
+            Panel.SetZIndex(this, 999);
             e.Handled = true;
+            if (popup != null)
+            {
+                popup.IsOpen = true;
+            }
             MousePressed?.Invoke(this, e.GetPosition(null));
         }
 
@@ -156,7 +147,12 @@ namespace InventoryControlLib.View
                 e.Handled = true;
                 MouseReleased?.Invoke(this, e.GetPosition(null));
                 var itemPosition = TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
-                hub.Publish(new ItemPositionUpdate { Item = this, Position = itemPosition });
+                hub.Publish(new CatalogItemPositionUpdate { Item = this, Position = itemPosition });
+                Matrix m = this.RenderTransform.Value;
+                m.SetIdentity();
+                this.RenderTransform = new MatrixTransform(m);
+                Panel.SetZIndex(this, 2);
+                popup.IsOpen = false;
             }
         }
 
@@ -211,6 +207,8 @@ namespace InventoryControlLib.View
                 transform.X += currentPointDiff.X - startingPoint.X;
                 transform.Y += currentPointDiff.Y - startingPoint.Y;
                 this.RenderTransform = transform;
+                popup.HorizontalOffset += 1;
+                popup.HorizontalOffset -= 1;
             }
         }
 

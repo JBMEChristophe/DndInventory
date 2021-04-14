@@ -1,4 +1,4 @@
-﻿using DNDinventory.ViewModel;
+﻿using InventoryControlLib.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,25 +11,21 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DNDinventory.View
+namespace InventoryControlLib.View
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for AmountWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class AmountWindow : Window
     {
-        private readonly MainViewModel _viewModel;
-
-        public MainWindow(MainViewModel viewModel)
+        public readonly AmountViewModel _viewModel;
+        public AmountWindow()
         {
             InitializeComponent();
-            _viewModel = viewModel;
+            _viewModel = new AmountViewModel();
             DataContext = _viewModel;
-
-            Closing += _viewModel.OnWindowClosing;
         }
     }
 }

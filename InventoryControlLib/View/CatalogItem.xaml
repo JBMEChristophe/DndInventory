@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="InventoryControlLib.View.CatalogItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" 
+             MouseLeftButtonDown="UserControl_MouseLeftButtonDown"
+             MouseLeftButtonUp="UserControl_MouseLeftButtonUp"
+             MouseMove="UserControl_MouseMove"
+             MouseWheel="UserControl_MouseWheel"
+             d:DesignHeight="50" d:DesignWidth="50"
+             DataContext="{Binding RelativeSource={RelativeSource Self}}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <Border CornerRadius="5" Width="{Binding Model.Width}" Height="{Binding Model.Height}">
+            <Border.Background>
+                <SolidColorBrush Color="Gray" Opacity="0.5" />
+            </Border.Background>
+        </Border>
+        <Image Source="{Binding Model.Image}" Width="{Binding Model.Width}" Height="{Binding Model.Height}"/>
+    </Grid>
+</UserControl>

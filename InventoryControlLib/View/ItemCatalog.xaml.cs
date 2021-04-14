@@ -1,4 +1,4 @@
-﻿using DNDinventory.ViewModel;
+﻿using InventoryControlLib.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,22 +14,24 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DNDinventory.View
+namespace InventoryControlLib.View
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for ItemCatalog.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class ItemCatalog : UserControl
     {
-        private readonly MainViewModel _viewModel;
-
-        public MainWindow(MainViewModel viewModel)
+        public readonly ItemCatalogViewModel _viewModel;
+        public ItemCatalog()
         {
             InitializeComponent();
-            _viewModel = viewModel;
+            _viewModel = new ItemCatalogViewModel();
             DataContext = _viewModel;
+        }
 
-            Closing += _viewModel.OnWindowClosing;
+        private void ItemListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _viewModel.ItemListView_SelectionChanged(sender, e);
         }
     }
 }

@@ -17,10 +17,13 @@ using System.Collections.ObjectModel;
 using Easy.MessageHub;
 using System.Windows.Controls;
 using System.Windows;
+using InventoryControlLib.View;
+using InventoryControlLib.Model;
+using Utilities;
 
 namespace DNDinventory.ViewModel
 {
-    class MainViewModel : INotifyPropertyChanged
+    public class MainViewModel : INotifyPropertyChanged
     {
         private const string version = "0.1.0";
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
@@ -32,6 +35,8 @@ namespace DNDinventory.ViewModel
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
+
+        private const string catalogItemsPath = "Catalogs/Items.xml";
 
         private bool serverRunning;
 
@@ -47,26 +52,92 @@ namespace DNDinventory.ViewModel
             };
             inv.Init();
 
-            inv.AddItem(0, 0, 0, "https://www.clipartmax.com/png/full/414-4147920_bow-arrow-symbol-vector-icon-illustration-triangle.png", isStackable: true, quantity: 5);
-            inv.AddItem(1, 1, 0, "https://icons.iconarchive.com/icons/chanut/role-playing/256/Sword-icon.png", spanY: 2);
-            inv.AddItem(2, 0, 2, "https://icons.iconarchive.com/icons/google/noto-emoji-objects/128/62967-shield-icon.png", spanY: 3, spanX: 3);
-            inv.AddItem(3, 2, 1, "https://i.pinimg.com/originals/8f/ef/44/8fef443afeefd9ab9ea353fc8db7bbf3.png", isStackable: true, quantity: 10);
-
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
             logger.Debug($"< AddInventory({name}, {size})");
         }
 
-        private void setupInv()
+        public void AddItemToCatalog(CatalogItemModel item)
         {
-            logger.Debug($"> setupInv()");
-            string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
-            int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
-            for (int i = 0; i < test.Length; i++)
+            logger.Debug($"> AddItemToCatalog(item:[{item}])");
+            item.Width = 50 * item.CellSpanX;
+            item.Height = 50 * item.CellSpanY;
+            if (string.IsNullOrEmpty(item.ImageUri))
             {
-                AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
+                item.ImageUri = "Images/No_image_available.png";
             }
-            logger.Debug($"< setupInv()");
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var tmp = new CatalogItem(hub, item);
+                Catalog._viewModel.AddItem(tmp);
+            });
+            logger.Debug($"< AddItemToCatalog(item:[{item}])");
+        }
+
+        private void UpdateProcess(ref double index, double totalCount, ref double progress, IProgress<double> progressUpdate)
+        {
+            index++;
+            if (index % 10 == 0)
+            {
+                progress = index / totalCount * 100.0;
+                progressUpdate.Report(progress);
+                System.Threading.Thread.Sleep(1);
+            }
+        }
+
+        private void SaveCatalog(object sender = null)
+        {
+            logger.Info($"> SaveCatalog()");
+            XmlHelper<List<CatalogItemModel>>.WriteToXml(catalogItemsPath, catalogItemModels);
+            logger.Info($"> SaveCatalog()");
+        }
+
+        public Task<bool> SetupInv(IProgress<double> progressUpdate)
+        {
+            return Task.Run(() =>
+            {
+                logger.Debug($"> setupInv()");
+                string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
+                int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
+                for (int i = 0; i < test.Length; i++)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
+                    });
+                }
+
+                double index = 0.0;
+                double progress = 0.0;
+                List<CatalogItemModel> catalogItems = new List<CatalogItemModel>();
+
+                var defaultCatalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml("DefaultItems.xml");
+                if (File.Exists(catalogItemsPath))
+                {
+                    catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
+                    foreach (var item in catalogItems)
+                    {
+                        catalogItemModels.Add(item);
+                        AddItemToCatalog(item);
+                        UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
+                    }
+                }
+                foreach (var item in defaultCatalogItems)
+                {
+                    if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
+                    {
+                        item.IsDefault = true;
+                        AddItemToCatalog(item);
+                        UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
+                    }
+                }
+                progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;
+                progressUpdate.Report(progress);
+
+                logger.Debug($"< setupInv()");
+                return true;
+            });
         }
 
         private StackPanel inventoryContent;
@@ -83,6 +154,41 @@ namespace DNDinventory.ViewModel
                 }
                 return inventoryContent;
             }
+        }
+
+        private List<CatalogItemModel> catalogItemModels;
+        private ItemCatalog catalog;
+        public ItemCatalog Catalog
+        {
+            get
+            {
+                if(catalog == null)
+                {
+                    catalog = new ItemCatalog();
+                    catalog._viewModel.ItemAdded += ItemAdded;
+                    catalog._viewModel.SaveCatalog += SaveCatalog;
+                    catalog._viewModel.DeleteCatalog += _viewModel_DeleteCatalog;
+                }
+                return catalog;
+            }
+        }
+
+        private void _viewModel_DeleteCatalog(object sender)
+        {
+            if (sender is CatalogItem)
+            {
+                var item = sender as CatalogItem;
+
+                catalogItemModels.Remove(item.Model);
+                SaveCatalog();
+            }
+        }
+
+        private void ItemAdded(object sender, CatalogItemModel model)
+        {
+            catalogItemModels.Add(model);
+            AddItemToCatalog(model);
+            SaveCatalog();
         }
 
         public IMessageHub Hub
@@ -852,6 +958,7 @@ namespace DNDinventory.ViewModel
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
             settingsFileHandler = new SettingsFileHandler();
+            catalogItemModels = new List<CatalogItemModel>();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;
@@ -865,8 +972,6 @@ namespace DNDinventory.ViewModel
             {
                 Directory.CreateDirectory(outputFolder);
             }
-
-            setupInv();
             logger.Info($"< MainViewModel()");
         }
 

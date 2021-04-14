@@ -1,20 +1,25 @@
 ﻿using InventoryControlLib.View;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using System.Xml.Serialization;
+using Utilities;
 
 namespace InventoryControlLib.Model
 {
-    public class ItemModel : INotifyPropertyChanged
+    public abstract class ItemModel : INotifyPropertyChanged
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
-        private int id;
-        public int ID
+        string id;
+        public string ID
         {
             get
             {
@@ -30,146 +35,173 @@ namespace InventoryControlLib.Model
             }
         }
 
-        private double cellWidth;
-        public double CellWidth
+        string name;
+        public string Name
         {
             get
             {
-                return cellWidth;
+                return name;
             }
             set
             {
-                if (cellWidth != value)
+                if (name != value)
                 {
-                    cellWidth = value;
-                    OnPropertyChange("CellWidth");
-                    OnPropertyChange("Width");
+                    name = value;
+                    OnPropertyChange("Name");
                 }
             }
         }
 
-        private double cellHeight;
-        public double CellHeight
+        string rarity;
+        public string Rarity
         {
             get
             {
-                return cellHeight;
+                return rarity;
             }
             set
             {
-                if (cellHeight != value)
+                if (rarity != value)
                 {
-                    cellHeight = value;
-                    OnPropertyChange("CellHeight");
-                    OnPropertyChange("Height");
+                    rarity = value;
+                    OnPropertyChange("Rarity");
                 }
             }
         }
 
-        public double Width
+        string attunement;
+        public string Attunement
         {
             get
             {
-                return cellWidth * CellSpanX;
-            }
-        }
-
-        public double Height
-        {
-            get
-            {
-                return cellHeight * cellSpanY;
-            }
-        }
-
-        private int cellSpanX;
-        public int CellSpanX
-        {
-            get
-            {
-                return cellSpanX;
+                return attunement;
             }
             set
             {
-                if (cellSpanX != value)
+                if (attunement != value)
                 {
-                    cellSpanX = value;
-                    OnPropertyChange("CellSpanX");
-                    OnPropertyChange("Width");
+                    attunement = value;
+                    OnPropertyChange("Attunement");
                 }
             }
         }
 
-        private int cellSpanY;
-        public int CellSpanY
+        string properties;
+        public string Properties
         {
             get
             {
-                return cellSpanY;
+                return properties;
             }
             set
             {
-                if (cellSpanY != value)
+                if (properties != value)
                 {
-                    cellSpanY = value;
-                    OnPropertyChange("CellSpanY");
-                    OnPropertyChange("Height");
+                    properties = value;
+                    OnPropertyChange("Properties");
                 }
             }
         }
 
-        private int cellX;
-        public int CellX
+        string description;
+        public string Description
         {
             get
             {
-                return cellX;
+                return description;
             }
             set
             {
-                if (cellX != value)
+                if (description != value)
                 {
-                    cellX = value;
-                    OnPropertyChange("CellX");
+                    description = value;
+                    OnPropertyChange("Description");
                 }
             }
         }
 
-        private int cellY;
-        public int CellY
+        ObservableCollection<ItemType> type;
+        public ObservableCollection<ItemType> Type
         {
             get
             {
-                return cellY;
+                return type;
             }
             set
             {
-                if (cellY != value)
+                if (type != value)
                 {
-                    cellY = value;
-                    OnPropertyChange("CellY");
+                    type = value;
+                    OnPropertyChange("Type");
                 }
             }
         }
 
-        private int quantity;
-        public int Quantity
+        [XmlIgnore]
+        public string TypeStr
         {
             get
             {
-                return quantity;
+                if (Type != null)
+                {
+                    return string.Join(",", EnumHelper.GetDescriptionListFromEnumList(Type));
+                }
+                return "";
+            }
+        }
+
+        string cost;
+        public string Cost
+        {
+            get
+            {
+                return cost;
             }
             set
             {
-                if (quantity != value)
+                if (cost != value)
                 {
-                    quantity = value;
-                    OnPropertyChange("Quantity");
+                    cost = value;
+                    OnPropertyChange("Cost");
                 }
             }
         }
 
-        private bool isStackable;
+        string weight;
+        public string Weight
+        {
+            get
+            {
+                return weight;
+            }
+            set
+            {
+                if (weight != value)
+                {
+                    weight = value;
+                    OnPropertyChange("Weight");
+                }
+            }
+        }
+
+        string source;
+        public string Source
+        {
+            get
+            {
+                return source;
+            }
+            set
+            {
+                if (source != value)
+                {
+                    source = value;
+                    OnPropertyChange("Source");
+                }
+            }
+        }
+
+        bool isStackable;
         public bool IsStackable
         {
             get
@@ -186,61 +218,189 @@ namespace InventoryControlLib.Model
             }
         }
 
-        //private Item parent;
-        /*public Item Parent
+        int cellSpanX;
+        public int CellSpanX
         {
             get
             {
-                return parent;
+                return cellSpanX;
             }
             set
             {
-                if (parent != value)
+                if (cellSpanX != value)
                 {
-                    parent = value;
-                    OnPropertyChange("Parent");
+                    var cellWidth = Width / CellSpanX;
+
+                    cellSpanX = value;
+                    OnPropertyChange("CellSpanX");
+
+                    Width = cellWidth * CellSpanX;
                 }
             }
-        }*/
+        }
+
+        int cellSpanY;
+        public int CellSpanY
+        {
+            get
+            {
+                return cellSpanY;
+            }
+            set
+            {
+                if (cellSpanY != value)
+                {
+                    var cellHeight = Height / CellSpanY;
+
+                    cellSpanY = value;
+                    OnPropertyChange("CellSpanY");
+
+                    Height = cellHeight * CellSpanY;
+                }
+            }
+        }
+
+        double width;
+        [XmlIgnore, DefaultValue("50")]
+        public double Width
+        {
+            get
+            {
+                return width;
+            }
+            set
+            {
+                if (width != value)
+                {
+                    width = value;
+                    OnPropertyChange("Width");
+                }
+            }
+        }
+
+        double height;
+        [XmlIgnore, DefaultValue("50")]
+        public double Height
+        {
+            get
+            {
+                return height;
+            }
+            set
+            {
+                if (height != value)
+                {
+                    height = value;
+                    OnPropertyChange("Height");
+                }
+            }
+        }
+
+        string xmlImageUrl;
+        [XmlElement(elementName: "ImageUri")]
+        public string XmlImageUrl
+        {
+            get
+            {
+                return ImageUri;
+            }
+            set
+            {
+                xmlImageUrl = value;
+                OnPropertyChange("XmlImageUrl");
+
+                ImageUri = xmlImageUrl;
+            }
+        }
 
         Uri imageUri;
-        public Uri ImageUri
+        [XmlIgnore]
+        public string ImageUri
         { 
             get
             {
-                return imageUri;
+                if(imageUri == null)
+                {
+                    return null;
+                }
+
+                if (imageUri.IsAbsoluteUri)
+                {
+                    if (imageUri.IsFile)
+                    {
+                        return PathHelper.GetRelativePathFromApplication(imageUri.AbsoluteUri);
+                    }
+                    return imageUri.AbsoluteUri;
+                }
+                else
+                {
+                    var tmp = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString());
+                    return tmp;
+                }
             }
             set
             {
-                imageUri = value;
-                Image = new BitmapImage(imageUri);
-                Image.DecodePixelWidth = (int)Math.Floor(CellWidth);
+                if (value == "")
+                {
+                    imageUri = new Uri(@"Images\No_image_available.png", UriKind.Relative);
+                }
+                else
+                {
+                    imageUri = new Uri(value, UriKind.RelativeOrAbsolute);
+                    if(!imageUri.IsAbsoluteUri)
+                    {
+                        imageUri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString()), UriKind.Absolute);
+                    }
+                }
                 OnPropertyChange("ImageUri");
                 OnPropertyChange("Image");
             }
         }
-        public BitmapImage Image { get; private set; }
-        
-        public ItemModel(int id, double width, double height, int column, int row, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, Uri image = null)
+
+        [XmlIgnore]
+        public BitmapImage Image 
+        { 
+            get
+            {
+                var Image = new BitmapImage(imageUri);
+                Image.DecodePixelWidth = (int)Math.Floor(Width);
+                return Image;
+            }
+        }
+
+        public ItemModel()
         {
-            logger.Debug($"> ItemModel(id: {id}, width: {width}, height: {height}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {image})");
+        }
+
+        public ItemModel(string id, string name, IList<ItemType> type, string cost, string weight, string rarity, string attunement, string properties, string description, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = "")
+        {
+            logger.Debug($"> ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
             ID = id;
-            CellWidth = width;
-            CellHeight = height;
+            Name = name;
+            Type = new ObservableCollection<ItemType>(type);
+            Cost = cost;
+            Weight = weight;
+            Rarity = rarity;
+            Attunement = attunement;
+            Properties = properties;
+            Description = description;
             CellSpanX = spanX;
             CellSpanY = spanY;
-            CellX = column;
-            CellY = row;
-            Quantity = quantity;
+            Source = source;
             IsStackable = isStackable;
+            Width = width;
+            Height = height;
             ImageUri = image;
-            Image = new BitmapImage(image);
-            logger.Debug($"< ItemModel(id: {id}, width: {width}, height: {height}, column: {column}, row: {row}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable}, image: {image})");
+            logger.Debug($"< ItemModel(id: {id}, name: {name}, type: {TypeStr}, cost: {cost}, weight: {weight}, source: {source}, width: {width}, height: {height}, isStackable: {isStackable}, image: {image})");
         }
+
+        public ItemModel(string id, string name, ItemType type, string cost, string weight, string rarity, string attunement, string properties, string description, string source, double width, double height, int spanX = 1, int spanY = 1, bool isStackable = false, string image = "")
+            :this(id, name, new List<ItemType> { type }, cost, weight, rarity, attunement, properties, description, source, width, height, spanX, spanY, isStackable, image)
+        { }
 
         public override string ToString()
         {
-            return $"ID: {ID}, CellSpan: [X: {CellSpanX}, Y: {CellSpanY}], Cell: [X: {CellX}, Y: {CellY}], Quantity: {Quantity}, IsStackable: {IsStackable}";
+            return $"ID: {ID}, Name: {Name}, Size: [X: {Width}, Y: {Height}], IsStackable: {IsStackable}";
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

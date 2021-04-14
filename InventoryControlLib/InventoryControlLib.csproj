@@ -66,7 +66,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="View\AmountWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\CatalogItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="View\Item.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ItemCatalog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ItemEditWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -76,15 +92,34 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EnumHelper.cs" />
     <Compile Include="GridHelper.cs" />
     <Compile Include="GridManager.cs" />
     <Compile Include="InventoryGrid.xaml.cs">
       <DependentUpon>InventoryGrid.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Model\CatalogItemModel.cs" />
+    <Compile Include="Model\ItemType.cs" />
+    <Compile Include="Model\UiItemModel.cs" />
+    <Compile Include="ViewModel\AmountViewModel.cs" />
+    <Compile Include="ViewModel\ItemCatalogViewModel.cs" />
+    <Compile Include="ViewModel\ItemEditViewModel.cs" />
+    <Compile Include="View\AmountWindow.xaml.cs">
+      <DependentUpon>AmountWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\CatalogItem.xaml.cs">
+      <DependentUpon>CatalogItem.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\Item.xaml.cs">
       <DependentUpon>Item.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModel\ItemSplitViewModel.cs" />
+    <Compile Include="View\ItemCatalog.xaml.cs">
+      <DependentUpon>ItemCatalog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ItemEditWindow.xaml.cs">
+      <DependentUpon>ItemEditWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\ItemSplitWindow.xaml.cs">
       <DependentUpon>ItemSplitWindow.xaml</DependentUpon>
     </Compile>
@@ -117,6 +152,10 @@
     <ProjectReference Include="..\CustomControls\CustomControls.csproj">
       <Project>{061395ab-2854-41c7-a3e0-5ae1574d2328}</Project>
       <Name>CustomControls</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utilities\Utilities.csproj">
+      <Project>{61CDF7CA-B3B3-4FB5-96B7-68EEE9A2B944}</Project>
+      <Name>Utilities</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

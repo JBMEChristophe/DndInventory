@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Threading.Tasks;
 using static DNDinventory.UpdatePolicy;
+using Utilities;
 
 namespace DNDinventory
 {

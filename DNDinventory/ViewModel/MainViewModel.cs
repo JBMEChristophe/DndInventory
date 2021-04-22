@@ -20,12 +20,14 @@ using System.Windows;
 using InventoryControlLib.View;
 using InventoryControlLib.Model;
 using Utilities;
+using InventoryControlLib.ViewModel;
 
 namespace DNDinventory.ViewModel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private const string version = "0.1.0";
+        private const string VERSION = "0.1.0";
+        private string NO_IMAGE;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly IMessageHub hub;
@@ -40,21 +42,27 @@ namespace DNDinventory.ViewModel
 
         private bool serverRunning;
 
-        private void AddInventory(string name, Size size)
+        private void AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
         {
             logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
-            var inv = new InventoryControlLib.InventoryGrid()
+            var inv = new InventoryControlLib.InventoryGrid(name, backgroundPath, canBeEdited, canBeDeleted)
             {
                 Columns = (int)size.Width,
                 Rows = (int)size.Height,
-                MessageHub = Hub,
-                Name = name
+                MessageHub = Hub
             };
+            inv.InventoryRemoved += Inv_InventoryRemoved;
             inv.Init();
 
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
             logger.Debug($"< AddInventory({name}, {size})");
+        }
+
+        private void Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
+        {
+            InventoryContent.Children.Remove(sender);
+            OnPropertyChange("InventoryContent");
         }
 
         public void AddItemToCatalog(CatalogItemModel item)
@@ -64,7 +72,7 @@ namespace DNDinventory.ViewModel
             item.Height = 50 * item.CellSpanY;
             if (string.IsNullOrEmpty(item.ImageUri))
             {
-                item.ImageUri = "Images/No_image_available.png";
+                item.ImageUri = NO_IMAGE;
             }
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -93,18 +101,23 @@ namespace DNDinventory.ViewModel
             logger.Info($"> SaveCatalog()");
         }
 
-        public Task<bool> SetupInv(IProgress<double> progressUpdate)
+        public Task<bool> SetupDefaultInv(IProgress<double> progressUpdate)
         {
+            var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
+
             return Task.Run(() =>
             {
                 logger.Debug($"> setupInv()");
-                string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
-                int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
-                for (int i = 0; i < test.Length; i++)
+                Dictionary<string, int[]> defaultInventories = new Dictionary<string, int[]>
+                { 
+                    { "Ground", new []{ 5, 10 } },
+                    { "Backpack", new []{ 7, 7 } },
+                };
+                foreach (var inventorty in defaultInventories)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
+                        AddInventory(inventorty.Key, NO_IMAGE, new Size(inventorty.Value[0], inventorty.Value[1]), false, false);
                     });
                 }
 
@@ -125,6 +138,7 @@ namespace DNDinventory.ViewModel
                 }
                 foreach (var item in defaultCatalogItems)
                 {
+                    if (reduced_loading && index > 10) break;
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
                         item.IsDefault = true;
@@ -203,7 +217,7 @@ namespace DNDinventory.ViewModel
         {
             get
             {
-                return version;
+                return VERSION;
             }
         }
 
@@ -586,6 +600,33 @@ namespace DNDinventory.ViewModel
             return true;
         }
 
+        DelegateCommand addInventoryCommand;
+        public ICommand AddInventoryCommand
+        {
+            get
+            {
+                if (addInventoryCommand == null)
+                {
+                    addInventoryCommand = new DelegateCommand(ExecuteAddInventoryCommand);
+                }
+                return addInventoryCommand;
+            }
+        }
+
+        private void ExecuteAddInventoryCommand()
+        {
+            logger.Info($"> ExecuteAddInventoryCommand()");
+            InventoryEditorViewModel viewModel = new InventoryEditorViewModel("Backpack", NO_IMAGE, true);
+            InventoryEditorWindow inventoryEditorWindow = new InventoryEditorWindow(viewModel);
+            inventoryEditorWindow.ShowDialog();
+
+            if (viewModel.Saved)
+            {
+                AddInventory(viewModel.InventoryName, viewModel.BackgroundPath, new Size(viewModel.XValue, viewModel.YValue));
+            }
+            logger.Info($"< ExecuteAddInventoryCommand()");
+        }
+
         DelegateCommand setOutputFolderCommand;
         public ICommand SetOutputFolderCommand
         {
@@ -953,6 +994,12 @@ namespace DNDinventory.ViewModel
         public MainViewModel()
         {
             logger.Info($"> MainViewModel()");
+            var tmp_NO_IMAGE = new Uri(@"Images\No_image_available.png", UriKind.Relative);
+            if (!tmp_NO_IMAGE.IsAbsoluteUri)
+            {
+                tmp_NO_IMAGE = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, tmp_NO_IMAGE.ToString()), UriKind.Absolute);
+            }
+            NO_IMAGE = tmp_NO_IMAGE.AbsoluteUri;
             transferClients = new List<TransferClient>();
             hub = new MessageHub();
             listener = new Listener();
@@ -965,6 +1012,8 @@ namespace DNDinventory.ViewModel
             timerOverallProgress.Elapsed += TimerOverallProgress_Elapsed;
 
             initDefaults();
+
+            ExecuteQuickLoadSettings();
 
             Transfers = new ObservableCollection<KeyValuePair<string, Transfer>>();
 
@@ -990,7 +1039,6 @@ namespace DNDinventory.ViewModel
         {
             logger.Debug($"> initDefaults()");
             settingsFileLocation = Properties.Settings.Default.SettingsFileLocation;
-            ExecuteQuickLoadSettings();
             ConnectionStatus = "No connection";
             ConnectText = "Connect";
             serverRunning = false;
@@ -1001,16 +1049,16 @@ namespace DNDinventory.ViewModel
         }
 
         private void UpdateSavedSettings() {
-            Host = settingsFileHandler.currentSettings.host;
-            Port = settingsFileHandler.currentSettings.port;
-            outputFolder = settingsFileHandler.currentSettings.outputFolder;
+            Host = settingsFileHandler.currentSettings.Host;
+            Port = settingsFileHandler.currentSettings.Port;
+            outputFolder = settingsFileHandler.currentSettings.OutputFolder;
             SetFolderOutputTxt = outputFolder;
         }
 
         private void PrepareSavedSettings() {
-            settingsFileHandler.currentSettings.host = host;
-            settingsFileHandler.currentSettings.port = port;
-            settingsFileHandler.currentSettings.outputFolder = outputFolder;
+            settingsFileHandler.currentSettings.Host = host;
+            settingsFileHandler.currentSettings.Port = port;
+            settingsFileHandler.currentSettings.OutputFolder = outputFolder;
         }
 
         private void TimerOverallProgress_Elapsed(object sender, ElapsedEventArgs e)

@@ -2,6 +2,7 @@
 using InventoryControlLib.Model;
 using InventoryControlLib.View;
 using InventoryControlLib.ViewModel;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,9 +24,12 @@ namespace InventoryControlLib
     /// <summary>
     /// Interaction logic for InventoryGrid.xaml
     /// </summary>
-    public partial class InventoryGrid : UserControl
+    public partial class InventoryGrid : UserControl, INotifyPropertyChanged
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public delegate void InventoryGridEvent(InventoryGrid sender);
+
+        public event InventoryGridEvent InventoryRemoved;
 
         private IMessageHub hub;
         private Guid itemSubscriptionToken;
@@ -33,10 +37,151 @@ namespace InventoryControlLib
 
         private GridManager manager;
 
-        public InventoryGrid()
+        public InventoryGrid(string name, string backgroundPath, bool canBeEdited = true, bool canBeDeleted = true)
         {
             this.DataContext = this;
             InitializeComponent();
+
+            InventoryName = name;
+            InventoryBackground = backgroundPath;
+            CanBeDeleted = canBeDeleted;
+            CanBeEdited = canBeEdited;
+        }
+
+        void RemoveInventory()
+        {
+            hub.Unsubscribe(itemSubscriptionToken);
+            hub.Unsubscribe(catalogSubscriptionToken);
+            InventoryRemoved?.Invoke(this);
+        }
+
+        DelegateCommand deleteCommand;
+        public ICommand DeleteCommand
+        {
+            get
+            {
+                if (deleteCommand == null)
+                {
+                    deleteCommand = new DelegateCommand(ExecuteDelete, CanExecuteDelete);
+                }
+                return deleteCommand;
+            }
+        }
+
+        private void ExecuteDelete()
+        {
+            logger.Info($"> ExecuteDelete()");
+            RemoveInventory();
+            logger.Info($"< ExecuteDelete()");
+        }
+
+        private bool CanExecuteDelete()
+        {
+            return CanBeDeleted && Inventory.Children.OfType<Item>().Count() == 0;
+        }
+
+        DelegateCommand editCommand;
+        public ICommand EditCommand
+        {
+            get
+            {
+                if (editCommand == null)
+                {
+                    editCommand = new DelegateCommand(ExecuteEdit, CanExecuteEdit);
+                }
+                return editCommand;
+            }
+        }
+
+        private void ExecuteEdit()
+        {
+            logger.Info($"> ExecuteEdit()");
+            InventoryEditorViewModel viewModel = new InventoryEditorViewModel(InventoryName, InventoryBackground);
+            viewModel.SaveClicked += InventoryEditorViewModel_SaveClicked; ;
+            InventoryEditorWindow inventoryEditorWindow = new InventoryEditorWindow(viewModel);
+            inventoryEditorWindow.ShowDialog();
+            logger.Info($"< ExecuteEdit()");
+        }
+
+        private void InventoryEditorViewModel_SaveClicked(InventoryEditorViewModel sender)
+        {
+            InventoryName = sender.InventoryName;
+            InventoryBackground = sender.BackgroundPath;
+        }
+
+        private bool CanExecuteEdit()
+        {
+            return CanBeEdited;
+        }
+
+        private bool canBeDeleted;
+        public bool CanBeDeleted
+        {
+            get
+            {
+                return canBeDeleted;
+            }
+            set
+            {
+                if (canBeDeleted != value)
+                {
+                    canBeDeleted = value;
+                    OnPropertyChange("CanBeDeleted");
+                    deleteCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        private bool canBeEdited;
+        public bool CanBeEdited
+        {
+            get
+            {
+                return canBeEdited;
+            }
+            set
+            {
+                if (canBeEdited != value)
+                {
+                    canBeEdited = value;
+                    OnPropertyChange("CanBeEdited");
+                    editCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        private string inventoryName;
+        public string InventoryName
+        {
+            get
+            {
+                return inventoryName;
+            }
+            set
+            {
+                if (inventoryName != value)
+                {
+                    inventoryName = value;
+                    OnPropertyChange("InventoryName");
+                }
+            }
+        }
+
+        private string inventoryBackground;
+        public string InventoryBackground
+        {
+            get
+            {
+                return inventoryBackground;
+            }
+            set
+            {
+                if (inventoryBackground != value)
+                {
+                    inventoryBackground = value;
+                    OnPropertyChange("InventoryBackground");
+                }
+            }
         }
 
         public void Init()
@@ -79,6 +224,7 @@ namespace InventoryControlLib
                     }
                 });
             }
+            deleteCommand.RaiseCanExecuteChanged();
             logger.Info($"({Name})< Init()");
         }
 
@@ -94,7 +240,8 @@ namespace InventoryControlLib
             item.MousePressed += Item_MousePressed;
             item.ItemSplitClicked += Item_SplitClicked;
             item.ItemDeleteClicked += Item_ItemDeleteClicked;
-            Inventory.Children.Add(item); 
+            Inventory.Children.Add(item);
+            deleteCommand.RaiseCanExecuteChanged();
             logger.Info($"({Name})< AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
         }
 
@@ -109,6 +256,7 @@ namespace InventoryControlLib
             {
                 sender.GridParent.Children.Remove(sender);
                 sender.RemoveEvents();
+                deleteCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -304,6 +452,7 @@ namespace InventoryControlLib
             {
                 logger.Debug($"Ignored");
             }
+            deleteCommand.RaiseCanExecuteChanged();
 
             logger.Debug($"({Name})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
         }
@@ -390,6 +539,16 @@ namespace InventoryControlLib
                 var item = sender as Item;
                 Panel.SetZIndex(this, 1);
                 Panel.SetZIndex(item, 2);
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChange(string propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
 

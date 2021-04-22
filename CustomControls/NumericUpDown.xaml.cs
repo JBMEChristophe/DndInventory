@@ -24,7 +24,12 @@ namespace CustomControls
         public NumericUpDown()
         {
             InitializeComponent();
-            NUDTextBox.Text = StartValue.ToString();
+        }
+
+        public override void EndInit()
+        {
+            base.EndInit();
+            SetValue(StartValue);
         }
 
         private void SetValue(int value)
@@ -99,7 +104,7 @@ namespace CustomControls
         /// </summary>
         public static readonly DependencyProperty MinValueProperty =
             DependencyProperty.Register("MinValue", typeof(int), typeof(NumericUpDown),
-            new FrameworkPropertyMetadata(0));
+            new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// Gets or sets the MinValue.
@@ -116,7 +121,7 @@ namespace CustomControls
         /// </summary>
         public static readonly DependencyProperty MaxValueProperty =
             DependencyProperty.Register("MaxValue", typeof(int), typeof(NumericUpDown),
-            new FrameworkPropertyMetadata(100));
+            new FrameworkPropertyMetadata(100, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// Gets or sets the MaxValue.
@@ -133,7 +138,7 @@ namespace CustomControls
         /// </summary>
         public static readonly DependencyProperty StartValueProperty =
             DependencyProperty.Register("StartValue", typeof(int), typeof(NumericUpDown),
-            new FrameworkPropertyMetadata(1));
+            new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// Gets or sets the StartValue.
@@ -150,7 +155,7 @@ namespace CustomControls
         /// </summary>
         public static readonly DependencyProperty ValueProperty =
             DependencyProperty.Register("Value", typeof(int), typeof(NumericUpDown),
-            new FrameworkPropertyMetadata(0, new PropertyChangedCallback(ValueChanged)));
+            new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, new PropertyChangedCallback(ValueChanged)));
 
         private static void ValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -171,7 +176,7 @@ namespace CustomControls
         /// </summary>
         public static readonly DependencyProperty StepProperty =
             DependencyProperty.Register("Step", typeof(int), typeof(NumericUpDown),
-            new FrameworkPropertyMetadata(1));
+            new FrameworkPropertyMetadata(1, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// Gets or sets the Value.

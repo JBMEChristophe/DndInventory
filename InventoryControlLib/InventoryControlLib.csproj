@@ -74,6 +74,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="View\InventoryEditorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\Item.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -92,7 +96,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EnumHelper.cs" />
     <Compile Include="GridHelper.cs" />
     <Compile Include="GridManager.cs" />
     <Compile Include="InventoryGrid.xaml.cs">
@@ -102,6 +105,7 @@
     <Compile Include="Model\ItemType.cs" />
     <Compile Include="Model\UiItemModel.cs" />
     <Compile Include="ViewModel\AmountViewModel.cs" />
+    <Compile Include="ViewModel\InventoryEditorViewModel.cs" />
     <Compile Include="ViewModel\ItemCatalogViewModel.cs" />
     <Compile Include="ViewModel\ItemEditViewModel.cs" />
     <Compile Include="View\AmountWindow.xaml.cs">
@@ -109,6 +113,9 @@
     </Compile>
     <Compile Include="View\CatalogItem.xaml.cs">
       <DependentUpon>CatalogItem.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\InventoryEditorWindow.xaml.cs">
+      <DependentUpon>InventoryEditorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\Item.xaml.cs">
       <DependentUpon>Item.xaml</DependentUpon>

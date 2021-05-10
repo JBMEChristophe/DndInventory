@@ -21,6 +21,7 @@ using InventoryControlLib.View;
 using InventoryControlLib.Model;
 using Utilities;
 using InventoryControlLib.ViewModel;
+using InventoryControlLib;
 
 namespace DNDinventory.ViewModel
 {
@@ -42,7 +43,7 @@ namespace DNDinventory.ViewModel
 
         private bool serverRunning;
 
-        private void AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
+        private Guid AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
         {
             logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
             var inv = new InventoryControlLib.InventoryGrid(name, backgroundPath, canBeEdited, canBeDeleted)
@@ -57,10 +58,16 @@ namespace DNDinventory.ViewModel
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
             logger.Debug($"< AddInventory({name}, {size})");
+            return inv.Id;
         }
 
         private void Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
         {
+            hub.Publish(new MoveAllItemsTo
+            {
+                MoveToId = GridManager.Instance.GroundId,
+                Items = sender.GetAllItems()
+            });
             InventoryContent.Children.Remove(sender);
             OnPropertyChange("InventoryContent");
         }
@@ -113,11 +120,16 @@ namespace DNDinventory.ViewModel
                     { "Ground", new []{ 5, 10 } },
                     { "Backpack", new []{ 7, 7 } },
                 };
-                foreach (var inventorty in defaultInventories)
+                foreach (var inventory in defaultInventories)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        AddInventory(inventorty.Key, NO_IMAGE, new Size(inventorty.Value[0], inventorty.Value[1]), false, false);
+                        var id = AddInventory(inventory.Key, NO_IMAGE, new Size(inventory.Value[0], inventory.Value[1]), false, false);
+
+                        if (inventory.Key == "Ground")
+                        {
+                            GridManager.Instance.GroundId = id;
+                        }
                     });
                 }
 

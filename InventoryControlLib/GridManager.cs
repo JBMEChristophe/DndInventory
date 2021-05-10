@@ -14,6 +14,7 @@ namespace InventoryControlLib
 
         private IMessageHub hub;
         private Guid gridSubscriptionToken;
+        private Guid deleteGridSubscriptionToken;
         private Guid itemSubscriptionToken;
 
         List<UpdateGrid> grids;
@@ -27,13 +28,16 @@ namespace InventoryControlLib
             }
         }
 
+        public Guid GroundId { get; set; }
+
         public void SetHub(IMessageHub MessageHub)
         {
             logger.Debug($"> SetHub(MessageHub: {MessageHub})");
             if (hub == null)
             {
                 hub = MessageHub;
-                gridSubscriptionToken = hub.Subscribe<GridAddUpdate>(GridAddUpdate);
+                gridSubscriptionToken = hub.Subscribe<UpdateGrid>(GridUpdate);
+                deleteGridSubscriptionToken = hub.Subscribe<DeleteGrid>(DeleteGrid);
                 itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
                 logger.Debug($"Hub set");
             }
@@ -47,12 +51,36 @@ namespace InventoryControlLib
             logger.Info($"< GridManager()");
         }
 
-        private void GridAddUpdate(GridAddUpdate gridUpdate)
+        private void GridUpdate(UpdateGrid gridUpdate)
         {
-            logger.Info($"(GridManager)> GridAddUpdate(gridUpdate: [{gridUpdate}])");
-            grids.Add(gridUpdate.Grid);
-            logger.Info($"(GridManager)< GridAddUpdate(gridUpdate: [{gridUpdate}])");
+            logger.Info($"(GridManager)> GridUpdate(gridUpdate: [{gridUpdate}])"); 
+            int index = grids.FindIndex(m => m.Id == gridUpdate.Id);
+            if (index >= 0)
+            { 
+                grids[index] = gridUpdate;
+            }
+            else
+            {
+                grids.Add(gridUpdate);
+            }
+            logger.Info($"(GridManager)< GridUpdate(gridUpdate: [{gridUpdate}])");
         }
+
+        private void DeleteGrid(DeleteGrid grid)
+        {
+            logger.Info($"(GridManager)> DeleteGrid(DeleteGrid: [{grid}])");
+            int index = grids.FindIndex(m => m.Id == grid.Id);
+            if (index >= 0)
+            {
+                grids.RemoveAt(index);
+            }
+            else
+            {
+                logger.Debug($"No grid found with guid: {grid.Id}");
+            }
+            logger.Info($"(GridManager)< DeleteGrid(DeleteGrid: [{grid}])");
+        }
+
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
             logger.Debug($"(GridManager)> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");

@@ -47,6 +47,7 @@
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="Split" Command="{Binding SplitCommand}" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" />
+                <MenuItem Header="Stack" Command="{Binding StackCommand}" Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" />
                 <Separator Visibility="{Binding Model.IsStackable, Converter={StaticResource VisibleIfTrueConverter}}" />
                 <MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
             </ContextMenu>

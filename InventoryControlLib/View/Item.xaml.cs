@@ -40,6 +40,7 @@ namespace InventoryControlLib.View
         public event MousePressEvent MouseReleased;
         public event MousePressEvent MousePressed;
         public event RightClickEvent ItemSplitClicked;
+        public event RightClickEvent ItemStackClicked;
         public event ItemEvent ItemDeleteClicked;
 
         public Item(IMessageHub hub, Grid parent, UiItemModel model = null)
@@ -113,11 +114,31 @@ namespace InventoryControlLib.View
         private void ExecuteSplit()
         {
             ItemSplitClicked?.Invoke(this);
+            splitCommand.RaiseCanExecuteChanged();
         }
 
         private bool CanExecuteSplit()
         {
             return Model.Quantity > 1;
+        }
+
+        DelegateCommand stackCommand;
+        public ICommand StackCommand
+        {
+            get
+            {
+                if (stackCommand == null)
+                {
+                    stackCommand = new DelegateCommand(ExecuteStack);
+                }
+                return stackCommand;
+            }
+        }
+
+        private void ExecuteStack()
+        {
+            ItemStackClicked?.Invoke(this);
+            splitCommand.RaiseCanExecuteChanged();
         }
 
         public void RemoveEvents()

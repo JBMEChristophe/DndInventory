@@ -33,23 +33,27 @@ namespace InventoryControlLib
 
     class UpdateGrid
     {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
         public Grid Grid { get; set; }
         public Size Size { get; set; }
         public Size CellSize { get; set; }
 
         public override string ToString()
         {
-            return $"size: [{Size}]; cellSize: [{CellSize}]";
+            return $"id: [{Id}], name: [{Name}], size: [{Size}]; cellSize: [{CellSize}]";
         }
     }
 
-    class GridAddUpdate
+    class DeleteGrid
     {
-        public UpdateGrid Grid { get; set; }
+        public Guid Id { get; set; }
+    }
 
-        public override string ToString()
-        {
-            return $"Grid: {Grid}";
-        }
+    public class MoveAllItemsTo
+    {
+        public Guid MoveToId { get; set; }
+        public List<Guid> FallBackIds { get; set; }
+        public List<Item> Items { get; set; }
     }
 }

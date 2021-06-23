@@ -61,11 +61,11 @@
             </Grid.ColumnDefinitions>
 
             <cc:CustomScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Content="{Binding InventoryContent}" Canvas.ZIndex="1" Grid.ColumnSpan="2" Margin="0,0,0,0.04"/>
-            <Expander Grid.Column="2" FlowDirection="RightToLeft" Margin="0,0,0,0.04">
+            <Expander Grid.Column="2" FlowDirection="RightToLeft" ExpandDirection="Right" Margin="0,0,0,0.04">
                 <ContentControl FlowDirection="LeftToRight" Margin="5" Content="{Binding Catalog}" Canvas.ZIndex="2" />
             </Expander>
         </Grid>
-        <Expander Margin="5" Grid.Row="2">
+        <Expander Margin="5" Grid.Row="2" ExpandDirection="Up">
             <Expander.Header>
                 <DockPanel VerticalAlignment="Stretch">
                     <Grid>

@@ -1,0 +1,43 @@
+﻿<Window x:Class="DNDinventory.View.InventorySelectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DNDinventory.View"
+        mc:Ignorable="d"
+        ShowInTaskbar="False" 
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None" 
+        AllowsTransparency="True"
+        Topmost="True" 
+        Title="Inventory Selection" Height="170" Width="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <ComboBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,2" ItemsSource="{Binding Inventories}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SelectedGridId}"/>
+        <Button Grid.Row="1" Grid.Column="0" Margin="0,2,1,0" Content="Delete" Command="{Binding DeleteCommand}"/>
+        <Button Grid.Row="1" Grid.Column="1" Margin="1,2,0,0" Content="Cancel" Command="{Binding CancelCommand}"/>
+        <Expander Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,2,0,0" Header="Fallback" IsExpanded="{Binding IsFallbackExpended}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
+                </Grid.RowDefinitions>
+                <ComboBox Grid.Row="0" Grid.Column="0" Margin="0,0,0,2" ItemsSource="{Binding Inventories}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SelectedFallbackGridId[0]}"/>
+                <ComboBox Grid.Row="1" Grid.Column="0" Margin="0,0,0,2" ItemsSource="{Binding Inventories}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SelectedFallbackGridId[1]}"/>
+                <ComboBox Grid.Row="2" Grid.Column="0" Margin="0,0,0,2" ItemsSource="{Binding Inventories}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SelectedFallbackGridId[2]}"/>
+                <ComboBox Grid.Row="3" Grid.Column="0" Margin="0,0,0,2" ItemsSource="{Binding Inventories}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding SelectedFallbackGridId[3]}"/>
+            </Grid>
+        </Expander>
+    </Grid>
+</Window>

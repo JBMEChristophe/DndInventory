@@ -27,7 +27,7 @@ namespace InventoryControlLib
     public partial class InventoryGrid : UserControl, INotifyPropertyChanged
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
-        public delegate void InventoryGridEvent(InventoryGrid sender);
+        public delegate bool InventoryGridEvent(InventoryGrid sender);
 
         public event InventoryGridEvent InventoryRemoved;
 
@@ -52,14 +52,17 @@ namespace InventoryControlLib
 
         void RemoveInventory()
         {
-            hub.Unsubscribe(itemSubscriptionToken);
-            hub.Unsubscribe(catalogSubscriptionToken);
-            hub.Unsubscribe(retrieveAllItemsSubscriptionToken);
-            hub.Publish(new DeleteGrid
+            var result = (InventoryRemoved?.Invoke(this));
+            if (result.HasValue && result.Value)
             {
-                Id = Id
-            });
-            InventoryRemoved?.Invoke(this);
+                hub.Unsubscribe(itemSubscriptionToken);
+                hub.Unsubscribe(catalogSubscriptionToken);
+                hub.Unsubscribe(retrieveAllItemsSubscriptionToken);
+                hub.Publish(new DeleteGrid
+                {
+                    Id = Id
+                });
+            }
         }
 
         DelegateCommand deleteCommand;
@@ -78,10 +81,7 @@ namespace InventoryControlLib
         private void ExecuteDelete()
         {
             logger.Info($"> ExecuteDelete()");
-            if (MessageBox.Show($"Are you sure you want to delete {InventoryName}?", $"Delete {InventoryName}", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            {
-                RemoveInventory();
-            }
+            RemoveInventory();
             logger.Info($"< ExecuteDelete()");
         }
 
@@ -259,12 +259,13 @@ namespace InventoryControlLib
                         AddItem(item.Model, (int)cell.Value.X, (int)cell.Value.Y, item.Model.Quantity);
                     }
                     else 
-                    { 
-                        if(move.FallBackIds.Count > 0)
+                    {
+                        if (move.FallBackIds.Count > 0)
                         {
                             hub.Publish(new MoveAllItemsTo
                             {
                                 MoveToId = move.FallBackIds.First(),
+                                Items = new List<Item>() { item },
                                 FallBackIds = move.FallBackIds.GetRange(1, move.FallBackIds.Count() - 1)
                             });
                         }
@@ -309,28 +310,33 @@ namespace InventoryControlLib
         private Point? NextAvailableCell(int spanX, int spanY)
         {
             logger.Info($"({InventoryName})> NextAvailableCell(spanX: {spanX}, spanY: {spanY})");
-            for (int y = 0; y < Inventory.RowDefinitions.Count; y++)
+
+            // Check if item even fits in grid
+            if (spanX <= Inventory.ColumnDefinitions.Count && spanY <= Inventory.RowDefinitions.Count)
             {
-                for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
+                for (int y = 0; y < Inventory.RowDefinitions.Count; y++)
                 {
-                    bool cellAvailable = true;
-                    foreach (var invItem in Inventory.Children)
+                    for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
                     {
-                        if (invItem is Item)
+                        bool cellAvailable = true;
+                        foreach (var invItem in Inventory.Children)
                         {
-                            var curItem = invItem as Item;
-                            if (gridCellsOccupied(x, y, spanX, spanY, curItem))
+                            if (invItem is Item)
                             {
-                                cellAvailable = false;
+                                var curItem = invItem as Item;
+                                if (gridCellsOccupied(x, y, spanX, spanY, curItem))
+                                {
+                                    cellAvailable = false;
+                                }
                             }
                         }
-                    }
 
-                    if(cellAvailable)
-                    {
-                        var point = new Point(x, y);
-                        logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return({point})");
-                        return point;
+                        if (cellAvailable)
+                        {
+                            var point = new Point(x, y);
+                            logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return({point})");
+                            return point;
+                        }
                     }
                 }
             }

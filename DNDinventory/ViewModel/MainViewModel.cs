@@ -22,6 +22,7 @@ using InventoryControlLib.Model;
 using Utilities;
 using InventoryControlLib.ViewModel;
 using InventoryControlLib;
+using DNDinventory.View;
 
 namespace DNDinventory.ViewModel
 {
@@ -61,15 +62,31 @@ namespace DNDinventory.ViewModel
             return inv.Id;
         }
 
-        private void Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
+        private bool Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
         {
+            logger.Debug($"> Inv_InventoryRemoved({sender.InventoryName})");
+            // Select where to move the items to
+            var invSelectViewModel = new InventorySelectViewModel(new List<Guid>() { sender.Id });
+            var invSelectWindow = new InventorySelectWindow(invSelectViewModel);
+            invSelectWindow.Owner = Application.Current.MainWindow;
+            invSelectWindow.ShowDialog();
+            if (invSelectViewModel.DialogResult == WinForms.DialogResult.Cancel)
+            {
+                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}).Return(false)");
+                return false; 
+            }
+
+            var moveToId = invSelectViewModel.SelectedGridId;
             hub.Publish(new MoveAllItemsTo
             {
-                MoveToId = GridManager.Instance.GroundId,
-                Items = sender.GetAllItems()
+                MoveToId = moveToId,
+                Items = sender.GetAllItems(),
+                FallBackIds = invSelectViewModel.SelectedFallbackGridId.ToList()
             });
             InventoryContent.Children.Remove(sender);
             OnPropertyChange("InventoryContent");
+            logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}).Return(true)");
+            return true;
         }
 
         public void AddItemToCatalog(CatalogItemModel item)

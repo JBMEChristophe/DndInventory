@@ -22,6 +22,7 @@ using InventoryControlLib.Model;
 using Utilities;
 using InventoryControlLib.ViewModel;
 using InventoryControlLib;
+using DNDinventory.View;
 
 namespace DNDinventory.ViewModel
 {
@@ -63,9 +64,15 @@ namespace DNDinventory.ViewModel
 
         private void Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
         {
+            // Select where to move the items to
+            var invSelectViewModel = new InventorySelectViewModel();
+            var invSelectWindow = new InventorySelectWindow(invSelectViewModel);
+            invSelectWindow.ShowDialog();
+            var moveToId = invSelectViewModel.SelectedGridId;
+
             hub.Publish(new MoveAllItemsTo
             {
-                MoveToId = GridManager.Instance.GroundId,
+                MoveToId = moveToId,
                 Items = sender.GetAllItems()
             });
             InventoryContent.Children.Remove(sender);

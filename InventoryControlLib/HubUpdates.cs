@@ -31,7 +31,7 @@ namespace InventoryControlLib
         }
     }
 
-    class UpdateGrid
+    public class UpdateGrid
     {
         public Guid Id { get; set; }
         public string Name { get; set; }

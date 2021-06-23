@@ -17,8 +17,8 @@ namespace InventoryControlLib
         private Guid deleteGridSubscriptionToken;
         private Guid itemSubscriptionToken;
 
-        List<UpdateGrid> grids;
-        
+        public List<UpdateGrid> Grids { get; }
+
         private static readonly Lazy<GridManager> lazy = new Lazy<GridManager>(() => new GridManager());
         public static GridManager Instance
         {
@@ -47,21 +47,21 @@ namespace InventoryControlLib
         private GridManager()
         {
             logger.Info($"> GridManager()");
-            grids = new List<UpdateGrid>();
+            Grids = new List<UpdateGrid>();
             logger.Info($"< GridManager()");
         }
 
         private void GridUpdate(UpdateGrid gridUpdate)
         {
             logger.Info($"(GridManager)> GridUpdate(gridUpdate: [{gridUpdate}])"); 
-            int index = grids.FindIndex(m => m.Id == gridUpdate.Id);
+            int index = Grids.FindIndex(m => m.Id == gridUpdate.Id);
             if (index >= 0)
             { 
-                grids[index] = gridUpdate;
+                Grids[index] = gridUpdate;
             }
             else
             {
-                grids.Add(gridUpdate);
+                Grids.Add(gridUpdate);
             }
             logger.Info($"(GridManager)< GridUpdate(gridUpdate: [{gridUpdate}])");
         }
@@ -69,10 +69,10 @@ namespace InventoryControlLib
         private void DeleteGrid(DeleteGrid grid)
         {
             logger.Info($"(GridManager)> DeleteGrid(DeleteGrid: [{grid}])");
-            int index = grids.FindIndex(m => m.Id == grid.Id);
+            int index = Grids.FindIndex(m => m.Id == grid.Id);
             if (index >= 0)
             {
-                grids.RemoveAt(index);
+                Grids.RemoveAt(index);
             }
             else
             {
@@ -84,7 +84,7 @@ namespace InventoryControlLib
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
             logger.Debug($"(GridManager)> ItemPositionUpdate(positionUpdate: [{positionUpdate}])");
-            foreach (var grid in grids)
+            foreach (var grid in Grids)
             {
                 var item = positionUpdate.Item;
                 var releasePoint = positionUpdate.Position;

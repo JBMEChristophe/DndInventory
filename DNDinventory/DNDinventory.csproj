@@ -85,10 +85,14 @@
     <Compile Include="Model\Transfer.cs" />
     <Compile Include="TaskUtilities.cs" />
     <Compile Include="UpdatePolicy.cs" />
+    <Compile Include="ViewModel\InventorySelectViewModel.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\SplashScreenViewModel.cs" />
     <Compile Include="View\SplashScreenWindow.xaml.cs">
       <DependentUpon>SplashScreenWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\InventorySelectWindow.xaml.cs">
+      <DependentUpon>InventorySelectWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -105,6 +109,10 @@
     <Page Include="View\SplashScreenWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\InventorySelectWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
   <ItemGroup>

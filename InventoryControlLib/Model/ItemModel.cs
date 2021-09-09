@@ -150,6 +150,24 @@ namespace InventoryControlLib.Model
             }
         }
 
+        [XmlIgnore]
+        public bool ShowInventoryItemTooltip
+        {
+            get
+            {
+                return Type.Contains(ItemType.Inventory);
+            }
+        }
+
+        [XmlIgnore]
+        public bool HideInventoryItemTooltip
+        {
+            get
+            {
+                return !ShowInventoryItemTooltip;
+            }
+        }
+
         string cost;
         public string Cost
         {

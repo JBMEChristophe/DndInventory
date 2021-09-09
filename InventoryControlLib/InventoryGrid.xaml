@@ -21,6 +21,7 @@
             VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,15,0">
             <Button Margin="2" Content="Edit" Command="{Binding EditCommand}" Visibility="{Binding CanBeEdited, Converter={StaticResource VisibleIfTrueConverter}}"/>
             <Button Margin="2" Content="Delete" Command="{Binding DeleteCommand}" Visibility="{Binding CanBeDeleted, Converter={StaticResource VisibleIfTrueConverter}}"/>
+            <Button Margin="2" Content="Drop" Command="{Binding DropCommand}" Visibility="{Binding CanBeDeleted, Converter={StaticResource VisibleIfTrueConverter}}"/>
         </StackPanel>
     </Grid>
 </UserControl>

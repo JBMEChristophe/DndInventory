@@ -54,6 +54,7 @@ namespace DNDinventory.ViewModel
                 MessageHub = Hub
             };
             inv.InventoryRemoved += Inv_InventoryRemoved;
+            inv.InventoryPickUpClicked += Inv_InventoryPickUpClicked;
             inv.Init();
 
             InventoryContent.Children.Add(inv);
@@ -62,9 +63,58 @@ namespace DNDinventory.ViewModel
             return inv.Id;
         }
 
-        private bool Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender)
+        private void Inv_InventoryPickUpClicked(object sender, InventoryGrid grid)
         {
-            logger.Debug($"> Inv_InventoryRemoved({sender.InventoryName})");
+            if(sender is Item)
+            {
+                var item = sender as Item;
+                if(item.Model is InventoryItemModel)
+                {
+                    var inventoryItemModel = item.Model as InventoryItemModel;
+                    var invGuid = AddInventory(inventoryItemModel.Name, inventoryItemModel.ImageUri, inventoryItemModel.Size);
+                    var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
+                    foreach (var invItem in inventoryItemModel.Items)
+                    {
+                        inventory.AddItem(invItem, invItem.CellX, invItem.CellY, invItem.Quantity);
+                    }
+                    grid.DeleteItem(item);
+                }
+            }
+        }
+
+        private bool Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender, bool drop)
+        {
+            logger.Debug($"> Inv_InventoryRemoved({sender.InventoryName}, {drop})");
+
+            if (drop)
+            {
+                if (MessageBox.Show($"Do you want to drop {sender.InventoryName}?", $"Drop {sender.InventoryName}?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    var ground = GridManager.Instance.GroundGrid;
+                    var nextCell = ground.Inventory.NextAvailableCell(1, 1);
+                    if (nextCell.HasValue)
+                    {
+                        var items = sender.GetAllItems().Select(x => x.Model).ToList();
+                        var item = new InventoryItemModel($"{sender.InventoryName}_" + Guid.NewGuid(), $"{sender.InventoryName}", new Size(sender.Columns, sender.Rows), (int)nextCell.Value.X, (int)nextCell.Value.Y, items, sender.InventoryBackground);
+                        ground.Inventory.AddItem(item, item.CellX, item.CellY, 1);
+                    }
+                    else
+                    {
+                        logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
+                        return false;
+                    }
+                }
+                else
+                {
+                    logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
+                    return false;
+                }
+                InventoryContent.Children.Remove(sender);
+                OnPropertyChange("InventoryContent");
+                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(true)");
+                return true;
+            }
+
             // Select where to move the items to
             var invSelectViewModel = new InventorySelectViewModel(new List<Guid>() { sender.Id });
             var invSelectWindow = new InventorySelectWindow(invSelectViewModel);
@@ -72,7 +122,7 @@ namespace DNDinventory.ViewModel
             invSelectWindow.ShowDialog();
             if (invSelectViewModel.DialogResult == WinForms.DialogResult.Cancel)
             {
-                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}).Return(false)");
+                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
                 return false; 
             }
 
@@ -85,7 +135,7 @@ namespace DNDinventory.ViewModel
             });
             InventoryContent.Children.Remove(sender);
             OnPropertyChange("InventoryContent");
-            logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}).Return(true)");
+            logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(true)");
             return true;
         }
 
@@ -125,6 +175,20 @@ namespace DNDinventory.ViewModel
             logger.Info($"> SaveCatalog()");
         }
 
+        struct DefaultInventoryItem
+        {
+            public DefaultInventoryItem(Size size, bool edit, bool delete)
+            {
+                Size = size;
+                EditRights = edit;
+                DeleteRights = delete;
+            }
+
+            public Size Size;
+            public bool EditRights;
+            public bool DeleteRights;
+        }
+
         public Task<bool> SetupDefaultInv(IProgress<double> progressUpdate)
         {
             var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
@@ -132,16 +196,16 @@ namespace DNDinventory.ViewModel
             return Task.Run(() =>
             {
                 logger.Debug($"> setupInv()");
-                Dictionary<string, int[]> defaultInventories = new Dictionary<string, int[]>
-                { 
-                    { "Ground", new []{ 5, 10 } },
-                    { "Backpack", new []{ 7, 7 } },
+                Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
+                {
+                    { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
+                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), true, false)},
                 };
                 foreach (var inventory in defaultInventories)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        var id = AddInventory(inventory.Key, NO_IMAGE, new Size(inventory.Value[0], inventory.Value[1]), false, false);
+                        var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
 
                         if (inventory.Key == "Ground")
                         {

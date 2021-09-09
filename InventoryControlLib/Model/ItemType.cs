@@ -87,5 +87,7 @@ namespace InventoryControlLib.Model
         Other,
         [Description("Unknown")]
         Unknown,
+        [Description("Inventory")]
+        Inventory,
     }
 }

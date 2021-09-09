@@ -35,6 +35,7 @@ namespace InventoryControlLib
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public InventoryGrid Inventory { get; set; }
         public Grid Grid { get; set; }
         public Size Size { get; set; }
         public Size CellSize { get; set; }

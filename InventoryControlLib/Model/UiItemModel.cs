@@ -6,12 +6,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Utilities;
 
 namespace InventoryControlLib.Model
 {
+    public delegate void UiPropertyChangeEvent(object sender);
+
     public class UiItemModel : ItemModel
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public event UiPropertyChangeEvent UiPropertyChanged;
 
         public double CellWidth
         {
@@ -21,6 +25,15 @@ namespace InventoryControlLib.Model
         public double CellHeight
         {
             get; private set;
+        }
+
+        public string TotalCost
+        {
+            get
+            {
+                var currency = CurrencyHelper.ConvertStringToCurrency(base.Cost);
+                return (currency * quantity).ToString();
+            }
         }
 
         int cellX;
@@ -70,6 +83,7 @@ namespace InventoryControlLib.Model
                 {
                     quantity = value;
                     OnPropertyChange("Quantity");
+                    UiPropertyChanged?.Invoke(this);
                 }
             }
         }

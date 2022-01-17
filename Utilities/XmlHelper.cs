@@ -13,6 +13,13 @@ namespace Utilities
         public static void WriteToXml(string filename, T o)
         {
             logger.Info($"> WriteToXml(filename: {filename})");
+
+            var directory = Path.GetDirectoryName(filename);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
             using (var writer = new StreamWriter(filename))
             {
                 ser.Serialize(writer, o);

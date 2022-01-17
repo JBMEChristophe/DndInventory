@@ -30,6 +30,8 @@ namespace InventoryControlLib.Model
             : this(model.ID, model.Name, model.Size, model.CellX, model.CellY, model.Items, model.ImageUri)
         { }
 
+        public InventoryItemModel() { }
+
         private static string CalculateCost(List<UiItemModel> items)
         {
             Currency cost = new Currency(0.0, CurrencyType.CP);

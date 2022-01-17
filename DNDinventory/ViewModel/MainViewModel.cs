@@ -28,7 +28,7 @@ namespace DNDinventory.ViewModel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private const string VERSION = "0.1.0";
+        private const string VERSION = "0.2.0";
         private string NO_IMAGE;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -39,20 +39,63 @@ namespace DNDinventory.ViewModel
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
+        private List<Guid> skipInventorySaveGuids;
 
         private const string catalogItemsPath = "Catalogs/Items.xml";
+        private const string inventoriesPath = "Inventories/";
+        private const string inventoriesInfoPath = "Inventories/InventoryInfo.xml";
 
         private bool serverRunning;
+
+        private void SaveInventories()
+        {
+            logger.Debug($"> SaveInventories()");
+            var infos = new List<InventorySaveInfo>();
+            foreach (InventoryGrid inventory in InventoryContent.Children)
+            {
+                if (!skipInventorySaveGuids.Contains(inventory.Id))
+                {
+                    string path = Path.Combine(inventoriesPath, $"{inventory.Id}.xml");
+                    inventory.Save(path);
+                    infos.Add(new InventorySaveInfo
+                    {
+                        Name = inventory.InventoryName,
+                        Size = new Size(inventory.Columns, inventory.Rows),
+                        Path = path
+                    });
+                }
+            }
+            var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+            defaultBackpackInv.Save(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+            XmlHelper<List<InventorySaveInfo>>.WriteToXml(inventoriesInfoPath, infos);
+            logger.Debug($"< SaveInventories()");
+        }
+
+        private void LoadInventories()
+        {
+            logger.Debug($"> LoadInventories()");
+            var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(inventoriesInfoPath);
+            if (infos != null)
+            {
+                foreach (InventorySaveInfo info in infos)
+                {
+                    var invGuid = AddInventory(info.Name, NO_IMAGE, info.Size);
+                    var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
+                    inventory.Load(info.Path);
+                    File.Delete(info.Path);
+                }
+            }
+            File.Delete(inventoriesInfoPath);
+            var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+            defaultBackpackInv.Load(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+            File.Delete(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+            logger.Debug($"< LoadInventories()");
+        }
 
         private Guid AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
         {
             logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
-            var inv = new InventoryControlLib.InventoryGrid(name, backgroundPath, canBeEdited, canBeDeleted)
-            {
-                Columns = (int)size.Width,
-                Rows = (int)size.Height,
-                MessageHub = Hub
-            };
+            var inv = new InventoryGrid(name, backgroundPath, size, Hub, canBeEdited, canBeDeleted);
             inv.InventoryRemoved += Inv_InventoryRemoved;
             inv.InventoryPickUpClicked += Inv_InventoryPickUpClicked;
             inv.Init();
@@ -199,20 +242,29 @@ namespace DNDinventory.ViewModel
                 Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
                 {
                     { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
-                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), true, false)},
+                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), false, false)},
                 };
                 foreach (var inventory in defaultInventories)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
+                        skipInventorySaveGuids.Add(id);
 
                         if (inventory.Key == "Ground")
                         {
                             GridManager.Instance.GroundId = id;
                         }
+                        if (inventory.Key == "Backpack")
+                        {
+                            GridManager.Instance.BackPackId = id;
+                        }
                     });
                 }
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LoadInventories();
+                });
 
                 double index = 0.0;
                 double progress = 0.0;
@@ -1099,6 +1151,7 @@ namespace DNDinventory.ViewModel
             listener.Accepted += Listener_Accepted;
             settingsFileHandler = new SettingsFileHandler();
             catalogItemModels = new List<CatalogItemModel>();
+            skipInventorySaveGuids = new List<Guid>();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;
@@ -1120,11 +1173,14 @@ namespace DNDinventory.ViewModel
         public void OnWindowClosing(object sender, CancelEventArgs e)
         {
             logger.Info($"> OnWindowClosing()");
+            e.Cancel = true;
+            SaveInventories();
             foreach (var client in transferClients)
             {
                 deregisterEvents(client);
             }
             Properties.Settings.Default.Save();
+            e.Cancel = false;
             logger.Info($"< OnWindowClosing()");
         }
 

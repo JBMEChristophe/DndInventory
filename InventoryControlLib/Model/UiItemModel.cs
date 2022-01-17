@@ -19,12 +19,12 @@ namespace InventoryControlLib.Model
 
         public double CellWidth
         {
-            get; private set;
+            get; set;
         }
 
         public double CellHeight
         {
-            get; private set;
+            get; set;
         }
 
         public string TotalCost
@@ -107,6 +107,8 @@ namespace InventoryControlLib.Model
         public UiItemModel(UiItemModel model, double cellWidth, double cellHeight)
             : this(model.ID, model.Name, model.Type, model.Cost, model.Weight, model.Rarity, model.Attunement, model.Properties, model.Description, model.Source, cellWidth, cellHeight, model.CellX, model.CellY, model.CellSpanX, model.CellSpanY, model.Quantity, model.IsStackable, model.ImageUri)
         { }
+
+        public UiItemModel() { }
 
         public override string ToString()
         {

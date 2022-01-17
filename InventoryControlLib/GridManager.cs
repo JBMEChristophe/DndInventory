@@ -29,6 +29,7 @@ namespace InventoryControlLib
         }
 
         public Guid GroundId { get; set; }
+        public Guid BackPackId { get; set; }
         public UpdateGrid GroundGrid { get { return Grids.Where((e) => e.Id == GroundId).First(); } }
 
         public void SetHub(IMessageHub MessageHub)

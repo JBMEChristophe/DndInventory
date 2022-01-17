@@ -74,6 +74,7 @@
     <Compile Include="ASyncCommand.cs" />
     <Compile Include="Interface\IAsyncCommand.cs" />
     <Compile Include="Interface\IErrorHandler.cs" />
+    <Compile Include="Model\InventorySaveInfo.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsFileHandler.cs" />
     <Compile Include="SocketFileTransfer\Headers.cs" />

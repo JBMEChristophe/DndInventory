@@ -41,7 +41,7 @@ namespace InventoryControlLib
 
         private GridManager manager;
 
-        public InventoryGrid(string name, string backgroundPath, bool canBeEdited = true, bool canBeDeleted = true)
+        public InventoryGrid(string name, string backgroundPath, Size size, IMessageHub hub, bool canBeEdited = true, bool canBeDeleted = true)
         {
             this.DataContext = this;
             InitializeComponent();
@@ -49,6 +49,9 @@ namespace InventoryControlLib
             id = Guid.NewGuid();
             InventoryName = name;
             InventoryBackground = backgroundPath;
+            Columns = (int)size.Width;
+            Rows = (int)size.Height;
+            MessageHub = hub;
             CanBeDeleted = canBeDeleted;
             CanBeEdited = canBeEdited;
         }
@@ -305,13 +308,64 @@ namespace InventoryControlLib
             }
         }
 
+        public void Save(string path)
+        {
+            logger.Info($"({InventoryName})> Save(path: {path})");
+            var save = new InventorySaveModel();
+            save.InventoryName = InventoryName;
+            save.InventoryBackground = InventoryBackground;
+            save.CanBeDeleted = CanBeDeleted;
+            save.CanBeEdited = CanBeEdited;
+            foreach (var item in Inventory.Children)
+            {
+                if (item is Item)
+                {
+                    var itemModel = (item as Item).Model;
+                    if (itemModel is InventoryItemModel)
+                    {
+                        save.InventoryItems.Add(itemModel as InventoryItemModel);
+                    }
+                    else if (itemModel is UiItemModel)
+                    {
+                        save.UiItems.Add(itemModel);
+                    }
+                }
+            }
+
+            XmlHelper<InventorySaveModel>.WriteToXml(path, save);
+            logger.Info($"({InventoryName})< Save(path: {path})");
+        }
+
+        public void Load(string path)
+        {
+            logger.Info($"({InventoryName})> Load(path: {path})");
+            var save = XmlHelper<InventorySaveModel>.ReadFromXml(path);
+            if (save != null)
+            {
+                InventoryName = save.InventoryName;
+                InventoryBackground = save.InventoryBackground;
+                CanBeDeleted = save.CanBeDeleted;
+                CanBeEdited = save.CanBeEdited;
+                foreach (UiItemModel item in save.UiItems)
+                {
+                    AddItem(item, item.CellX, item.CellY, item.Quantity);
+                }
+                foreach (InventoryItemModel item in save.InventoryItems)
+                {
+                    AddItem(item, item.CellX, item.CellY, item.Quantity);
+                }
+            }
+            logger.Info($"({InventoryName})< Load(path: {path})");
+        }
+
         public void AddItem(string id, string name, IList<ItemType> types, string cost, string weight, string rarity, string attunement, string properties, string description, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, ItemModel itemModel = null)
         {
             logger.Info($"({InventoryName})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
             Item item;
             if(itemModel != null && itemModel is InventoryItemModel)
             {
-                item = new Item(hub, Inventory, itemModel as UiItemModel);
+                //item = new Item(hub, Inventory, itemModel as UiItemModel);
+                item = new Item(hub, Inventory, new InventoryItemModel(itemModel as InventoryItemModel));
             }
             else
             {
@@ -359,7 +413,7 @@ namespace InventoryControlLib
             }
         }
 
-        private Item[,] OccupiedGrid()
+        private Item[,] OccupiedGrid(Item currentItem = null)
         {
             Item[,] grid = ArrayHelper.GetNew2DArray<Item>(Rows, Columns, null);
             foreach (var invItem in Inventory.Children)
@@ -367,11 +421,14 @@ namespace InventoryControlLib
                 if (invItem is Item)
                 {
                     var curItem = invItem as Item;
-                    for (int y = curItem.Model.CellY; y < curItem.Model.CellY + curItem.Model.CellSpanY; y++)
+                    if (currentItem != curItem)
                     {
-                        for (int x = curItem.Model.CellX; x < curItem.Model.CellX + curItem.Model.CellSpanX; x++)
+                        for (int y = curItem.Model.CellY; y < curItem.Model.CellY + curItem.Model.CellSpanY; y++)
                         {
-                            grid[y, x] = curItem;
+                            for (int x = curItem.Model.CellX; x < curItem.Model.CellX + curItem.Model.CellSpanX; x++)
+                            {
+                                grid[y, x] = curItem;
+                            }
                         }
                     }
                 }
@@ -559,7 +616,7 @@ namespace InventoryControlLib
                     cancelMove = true;
                 }
 
-                var occupyGrid = OccupiedGrid();
+                var occupyGrid = OccupiedGrid(item);
                 if (occupyGrid[icellY, icellX] != null)
                 {
                     if (item.Model.ID == occupyGrid[icellY, icellX].Model.ID && item.Model.IsStackable)
@@ -572,6 +629,21 @@ namespace InventoryControlLib
                         cancelMove = true;
                     }
                 }
+
+                if (!cancelMove && !stacked)
+                {
+                    for (int itemY = icellY; itemY < icellY + item.Model.CellSpanY; itemY++)
+                    {
+                        for (int itemX = icellX; itemX < icellX + item.Model.CellSpanX; itemX++)
+                        {
+                            if (occupyGrid[itemY, itemX] != null)
+                            {
+                                cancelMove = true;
+                            }
+                        }
+                    }
+                }
+                
 
                 if (cancelMove)
                 {

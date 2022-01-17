@@ -12,7 +12,7 @@
     <Grid>
         <GroupBox x:Name="gb" Margin="10" Padding="10" Header="{Binding InventoryName}">
             <Grid>
-                <Image HorizontalAlignment="Left" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=Inventory}" Height="{Binding ActualHeight, ElementName=Inventory}" Source="{Binding InventoryBackground}"/>
+                <Image HorizontalAlignment="Center" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=Inventory}" Height="{Binding ActualHeight, ElementName=Inventory}" Source="{Binding InventoryBackground}"/>
                 <Grid x:Name="Inventory" HorizontalAlignment="Left" VerticalAlignment="Top" local:GridHelpers.ColumnCount="{Binding Columns}" local:GridHelpers.RowCount="{Binding Rows}">
                 </Grid>
             </Grid>

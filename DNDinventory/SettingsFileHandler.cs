@@ -27,11 +27,12 @@ namespace DNDinventory
         public string OutputFolder = "Transfers";
         public string ImagesFolder = "Images";
         public string CatalogFolder = "Catalogs";
+        public string InventoriesFolder = "Inventories";
         public DebugSetting Debug = DebugSetting.None;
 
         public override string ToString()
         {
-            return $"host: {Host}; port: {Port}; outputFolder:{OutputFolder}; ImagesFolder:{ImagesFolder}; CatalogFolder:{CatalogFolder}; Debug:{EnumHelper.GetDescriptionFromEnumValue(Debug)}";
+            return $"host: {Host}; port: {Port}; outputFolder:{OutputFolder}; ImagesFolder:{ImagesFolder}; CatalogFolder:{CatalogFolder}; InventoriesFolder:{InventoriesFolder}; Debug:{EnumHelper.GetDescriptionFromEnumValue(Debug)}";
         }
     }
 

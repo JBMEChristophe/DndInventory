@@ -82,7 +82,7 @@ parser.add_argument('-i', '--item_path', default='Items.csv', help='Item input p
 args = parser.parse_args()
 
 export_items = []
-with open(args.item_path, 'r') as f:
+with open(args.item_path, 'r', encoding='utf8') as f:
     reader = csv.reader(f)
     next(reader)
     for row in reader:

@@ -365,10 +365,10 @@ namespace InventoryControlLib.Model
                 else
                 {
                     imageUri = new Uri(value, UriKind.RelativeOrAbsolute);
-                    if(!imageUri.IsAbsoluteUri)
-                    {
-                        imageUri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString()), UriKind.Absolute);
-                    }
+                }
+                if (!imageUri.IsAbsoluteUri)
+                {
+                    imageUri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString()), UriKind.Absolute);
                 }
                 OnPropertyChange("ImageUri");
                 OnPropertyChange("Image");

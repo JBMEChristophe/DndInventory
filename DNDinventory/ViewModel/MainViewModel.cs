@@ -74,21 +74,33 @@ namespace DNDinventory.ViewModel
         private void LoadInventories()
         {
             logger.Debug($"> LoadInventories()");
-            var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(inventoriesInfoPath);
-            if (infos != null)
+            if (File.Exists(inventoriesInfoPath))
             {
-                foreach (InventorySaveInfo info in infos)
+                var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(inventoriesInfoPath);
+                if (infos != null)
                 {
-                    var invGuid = AddInventory(info.Name, NO_IMAGE, info.Size);
-                    var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
-                    inventory.Load(info.Path);
-                    File.Delete(info.Path);
+                    foreach (InventorySaveInfo info in infos)
+                    {
+                        var invGuid = AddInventory(info.Name, NO_IMAGE, info.Size);
+                        var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
+
+                        if (File.Exists(info.Path))
+                        {
+                            inventory.Load(info.Path);
+                            File.Delete(info.Path);
+                        }
+                    }
                 }
+                File.Delete(inventoriesInfoPath);
             }
-            File.Delete(inventoriesInfoPath);
-            var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
-            defaultBackpackInv.Load(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
-            File.Delete(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+
+            var defaultBackpack = Path.Combine(inventoriesPath, $"DefaultBackpack.xml");
+            if (File.Exists(defaultBackpack))
+            {
+                var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+                defaultBackpackInv.Load(defaultBackpack);
+                File.Delete(defaultBackpack);
+            }
             logger.Debug($"< LoadInventories()");
         }
 
@@ -214,6 +226,15 @@ namespace DNDinventory.ViewModel
         private void SaveCatalog(object sender = null)
         {
             logger.Info($"> SaveCatalog()");
+            if(sender is CatalogItem)
+            {
+                var catalogItem = sender as CatalogItem;
+
+                if (catalogItemModels.Where(i => i.ID == catalogItem.Model.ID).Count() == 0)
+                {
+                    catalogItemModels.Add(catalogItem.Model);
+                }
+            }
             XmlHelper<List<CatalogItemModel>>.WriteToXml(catalogItemsPath, catalogItemModels);
             logger.Info($"> SaveCatalog()");
         }
@@ -276,6 +297,11 @@ namespace DNDinventory.ViewModel
                     catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
                     foreach (var item in catalogItems)
                     {
+                        string imagePath = $@"Images\Items\{item.Source}\{item.Name}.jpg";
+                        if (File.Exists(imagePath))
+                        {
+                            item.ImageUri = imagePath;
+                        }
                         catalogItemModels.Add(item);
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
@@ -286,6 +312,11 @@ namespace DNDinventory.ViewModel
                     if (reduced_loading && index > 10) break;
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
+                        string imagePath = $@"Images\Items\{item.Name}.jpg";
+                        if (File.Exists(imagePath))
+                        {
+                            item.ImageUri = imagePath;
+                        }
                         item.IsDefault = true;
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);

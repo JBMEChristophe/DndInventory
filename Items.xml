@@ -23759,9 +23759,7 @@
 	<CatalogItemModel>
 		<ID>WBtW_Witchlight_Vane</ID>
 		<Name>Witchlight Vane</Name>
-		<Type>
-			<ItemType />
-		</Type>
+		<Type />
 		<Rarity>legendary</Rarity>
 		<Attunement>requires attunement by a mister light or his handpicked successor</Attunement>
 		<Properties />

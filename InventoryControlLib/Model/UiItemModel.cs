@@ -6,21 +6,34 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using Utilities;
 
 namespace InventoryControlLib.Model
 {
+    public delegate void UiPropertyChangeEvent(object sender);
+
     public class UiItemModel : ItemModel
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public event UiPropertyChangeEvent UiPropertyChanged;
 
         public double CellWidth
         {
-            get; private set;
+            get; set;
         }
 
         public double CellHeight
         {
-            get; private set;
+            get; set;
+        }
+
+        public string TotalCost
+        {
+            get
+            {
+                var currency = CurrencyHelper.ConvertStringToCurrency(base.Cost);
+                return (currency * quantity).ToString();
+            }
         }
 
         int cellX;
@@ -70,6 +83,7 @@ namespace InventoryControlLib.Model
                 {
                     quantity = value;
                     OnPropertyChange("Quantity");
+                    UiPropertyChanged?.Invoke(this);
                 }
             }
         }
@@ -93,6 +107,8 @@ namespace InventoryControlLib.Model
         public UiItemModel(UiItemModel model, double cellWidth, double cellHeight)
             : this(model.ID, model.Name, model.Type, model.Cost, model.Weight, model.Rarity, model.Attunement, model.Properties, model.Description, model.Source, cellWidth, cellHeight, model.CellX, model.CellY, model.CellSpanX, model.CellSpanY, model.Quantity, model.IsStackable, model.ImageUri)
         { }
+
+        public UiItemModel() { }
 
         public override string ToString()
         {

@@ -2,6 +2,7 @@
 using InventoryControlLib.Model;
 using InventoryControlLib.View;
 using InventoryControlLib.ViewModel;
+using Prism.Commands;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,31 +18,226 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Utilities;
 
 namespace InventoryControlLib
 {
     /// <summary>
     /// Interaction logic for InventoryGrid.xaml
     /// </summary>
-    public partial class InventoryGrid : UserControl
+    public partial class InventoryGrid : UserControl, INotifyPropertyChanged
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        public delegate bool InventoryGridEvent(InventoryGrid sender, bool drop);
+        public delegate void InventoryPickupEvent(object sender, InventoryGrid grid);
+
+        public event InventoryGridEvent InventoryRemoved;
+        public event InventoryPickupEvent InventoryPickUpClicked;
 
         private IMessageHub hub;
         private Guid itemSubscriptionToken;
+        private Guid retrieveAllItemsSubscriptionToken;
         private Guid catalogSubscriptionToken;
 
         private GridManager manager;
 
-        public InventoryGrid()
+        public InventoryGrid(string name, string backgroundPath, Size size, IMessageHub hub, bool canBeEdited = true, bool canBeDeleted = true)
         {
             this.DataContext = this;
             InitializeComponent();
+
+            id = Guid.NewGuid();
+            InventoryName = name;
+            InventoryBackground = backgroundPath;
+            Columns = (int)size.Width;
+            Rows = (int)size.Height;
+            MessageHub = hub;
+            CanBeDeleted = canBeDeleted;
+            CanBeEdited = canBeEdited;
+        }
+
+        void RemoveInventory(bool drop = false)
+        {
+            var result = (InventoryRemoved?.Invoke(this, drop));
+            if (result.HasValue && result.Value)
+            {
+                hub.Unsubscribe(itemSubscriptionToken);
+                hub.Unsubscribe(catalogSubscriptionToken);
+                hub.Unsubscribe(retrieveAllItemsSubscriptionToken);
+                hub.Publish(new DeleteGrid
+                {
+                    Id = Id
+                });
+            }
+        }
+
+        DelegateCommand deleteCommand;
+        public ICommand DeleteCommand
+        {
+            get
+            {
+                if (deleteCommand == null)
+                {
+                    deleteCommand = new DelegateCommand(ExecuteDelete, CanExecuteDelete);
+                }
+                return deleteCommand;
+            }
+        }
+
+        private void ExecuteDelete()
+        {
+            logger.Info($"> ExecuteDelete()");
+            RemoveInventory();
+            logger.Info($"< ExecuteDelete()");
+        }
+
+        private bool CanExecuteDelete()
+        {
+            return CanBeDeleted;
+        }
+
+        DelegateCommand dropCommand;
+        public ICommand DropCommand
+        {
+            get
+            {
+                if (dropCommand == null)
+                {
+                    dropCommand = new DelegateCommand(ExecuteDrop, CanExecuteDrop);
+                }
+                return dropCommand;
+            }
+        }
+
+        private void ExecuteDrop()
+        {
+            logger.Info($"> ExecuteDrop()");
+            RemoveInventory(true);
+            logger.Info($"< ExecuteDrop()");
+        }
+
+        private bool CanExecuteDrop()
+        {
+            return CanBeDeleted;
+        }
+
+        DelegateCommand editCommand;
+        public ICommand EditCommand
+        {
+            get
+            {
+                if (editCommand == null)
+                {
+                    editCommand = new DelegateCommand(ExecuteEdit, CanExecuteEdit);
+                }
+                return editCommand;
+            }
+        }
+
+        private void ExecuteEdit()
+        {
+            logger.Info($"> ExecuteEdit()");
+            InventoryEditorViewModel viewModel = new InventoryEditorViewModel(InventoryName, InventoryBackground);
+            viewModel.SaveClicked += InventoryEditorViewModel_SaveClicked; ;
+            InventoryEditorWindow inventoryEditorWindow = new InventoryEditorWindow(viewModel);
+            inventoryEditorWindow.ShowDialog();
+            logger.Info($"< ExecuteEdit()");
+        }
+
+        private void InventoryEditorViewModel_SaveClicked(InventoryEditorViewModel sender)
+        {
+            InventoryName = sender.InventoryName;
+            InventoryBackground = sender.BackgroundPath;
+        }
+
+        private bool CanExecuteEdit()
+        {
+            return CanBeEdited;
+        }
+
+        private bool canBeDeleted;
+        public bool CanBeDeleted
+        {
+            get
+            {
+                return canBeDeleted;
+            }
+            set
+            {
+                if (canBeDeleted != value)
+                {
+                    canBeDeleted = value;
+                    OnPropertyChange("CanBeDeleted");
+                    deleteCommand.RaiseCanExecuteChanged();
+                    dropCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        private bool canBeEdited;
+        public bool CanBeEdited
+        {
+            get
+            {
+                return canBeEdited;
+            }
+            set
+            {
+                if (canBeEdited != value)
+                {
+                    canBeEdited = value;
+                    OnPropertyChange("CanBeEdited");
+                    editCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        private string inventoryName;
+        public string InventoryName
+        {
+            get
+            {
+                return inventoryName;
+            }
+            set
+            {
+                if (inventoryName != value)
+                {
+                    inventoryName = value;
+                    OnPropertyChange("InventoryName");
+                }
+            }
+        }
+
+        private Guid id;
+        public Guid Id
+        { 
+            get
+            {
+                return id;
+            } 
+        }
+
+        private string inventoryBackground;
+        public string InventoryBackground
+        {
+            get
+            {
+                return inventoryBackground;
+            }
+            set
+            {
+                if (inventoryBackground != value)
+                {
+                    inventoryBackground = value;
+                    OnPropertyChange("InventoryBackground");
+                }
+            }
         }
 
         public void Init()
         {
-            logger.Info($"({Name})> Init()");
+            logger.Info($"({InventoryName})> Init()");
             if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
             {
                 manager = GridManager.Instance;
@@ -67,25 +263,114 @@ namespace InventoryControlLib
 
                 hub = MessageHub;
                 itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
+                retrieveAllItemsSubscriptionToken = hub.Subscribe<MoveAllItemsTo>(RetrieveAllItems);
                 catalogSubscriptionToken = hub.Subscribe<CatalogItemPositionUpdate>(CatalogItemPositionUpdate);
 
-                hub.Publish(new GridAddUpdate
+                hub.Publish(new UpdateGrid
                 {
-                    Grid = new UpdateGrid
-                    {
-                        Grid = Inventory,
-                        CellSize = new Size(CellWidth, CellHeight),
-                        Size = new Size(Columns * CellWidth, Rows * CellHeight)
-                    }
+                    Id = Id,
+                    Name = InventoryName,
+                    Inventory = this,
+                    Grid = Inventory,
+                    CellSize = new Size(CellWidth, CellHeight),
+                    Size = new Size(Columns * CellWidth, Rows * CellHeight)
                 });
             }
-            logger.Info($"({Name})< Init()");
+            deleteCommand.RaiseCanExecuteChanged();
+            dropCommand.RaiseCanExecuteChanged();
+            logger.Info($"({InventoryName})< Init()");
         }
 
-        public void AddItem(string id, string name, IList<ItemType> types, string cost, string weight, string rarity, string attunement, string properties, string description, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false)
+        void RetrieveAllItems(MoveAllItemsTo move)
         {
-            logger.Info($"({Name})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
-            Item item = new Item(hub, Inventory, new UiItemModel(id, name, types, cost, weight, rarity, attunement, properties, description, source, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, imagePath));
+            if(move.MoveToId == Id)
+            {
+                foreach (var item in move.Items)
+                {
+                    var cell = NextAvailableCell(item.Model.CellSpanX, item.Model.CellSpanY);
+                    if (cell.HasValue)
+                    {
+                        AddItem(item.Model, (int)cell.Value.X, (int)cell.Value.Y, item.Model.Quantity);
+                    }
+                    else 
+                    {
+                        if (move.FallBackIds.Count > 0)
+                        {
+                            hub.Publish(new MoveAllItemsTo
+                            {
+                                MoveToId = move.FallBackIds.First(),
+                                Items = new List<Item>() { item },
+                                FallBackIds = move.FallBackIds.GetRange(1, move.FallBackIds.Count() - 1)
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Save(string path)
+        {
+            logger.Info($"({InventoryName})> Save(path: {path})");
+            var save = new InventorySaveModel();
+            save.InventoryName = InventoryName;
+            save.InventoryBackground = InventoryBackground;
+            save.CanBeDeleted = CanBeDeleted;
+            save.CanBeEdited = CanBeEdited;
+            foreach (var item in Inventory.Children)
+            {
+                if (item is Item)
+                {
+                    var itemModel = (item as Item).Model;
+                    if (itemModel is InventoryItemModel)
+                    {
+                        save.InventoryItems.Add(itemModel as InventoryItemModel);
+                    }
+                    else if (itemModel is UiItemModel)
+                    {
+                        save.UiItems.Add(itemModel);
+                    }
+                }
+            }
+
+            XmlHelper<InventorySaveModel>.WriteToXml(path, save);
+            logger.Info($"({InventoryName})< Save(path: {path})");
+        }
+
+        public void Load(string path)
+        {
+            logger.Info($"({InventoryName})> Load(path: {path})");
+            var save = XmlHelper<InventorySaveModel>.ReadFromXml(path);
+            if (save != null)
+            {
+                InventoryName = save.InventoryName;
+                InventoryBackground = save.InventoryBackground;
+                CanBeDeleted = save.CanBeDeleted;
+                CanBeEdited = save.CanBeEdited;
+                foreach (UiItemModel item in save.UiItems)
+                {
+                    AddItem(item, item.CellX, item.CellY, item.Quantity);
+                }
+                foreach (InventoryItemModel item in save.InventoryItems)
+                {
+                    AddItem(item, item.CellX, item.CellY, item.Quantity);
+                }
+            }
+            logger.Info($"({InventoryName})< Load(path: {path})");
+        }
+
+        public void AddItem(string id, string name, IList<ItemType> types, string cost, string weight, string rarity, string attunement, string properties, string description, string source, int x, int y, string imagePath, int spanX = 1, int spanY = 1, int quantity = 1, bool isStackable = false, ItemModel itemModel = null)
+        {
+            logger.Info($"({InventoryName})> AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
+            Item item;
+            if(itemModel != null && itemModel is InventoryItemModel)
+            {
+                //item = new Item(hub, Inventory, itemModel as UiItemModel);
+                item = new Item(hub, Inventory, new InventoryItemModel(itemModel as InventoryItemModel));
+            }
+            else
+            {
+                item = new Item(hub, Inventory, new UiItemModel(id, name, types, cost, weight, rarity, attunement, properties, description, source, CellWidth, CellHeight, x, y, spanX, spanY, quantity, isStackable, imagePath));
+            }
             Grid.SetColumnSpan(item, spanX);
             Grid.SetRowSpan(item, spanY);
             Grid.SetColumn(item, x);
@@ -93,61 +378,109 @@ namespace InventoryControlLib
             item.MouseReleased += Item_MouseReleased;
             item.MousePressed += Item_MousePressed;
             item.ItemSplitClicked += Item_SplitClicked;
+            item.ItemStackClicked += Item_StackClicked;
             item.ItemDeleteClicked += Item_ItemDeleteClicked;
-            Inventory.Children.Add(item); 
-            logger.Info($"({Name})< AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
+            item.InventoryPickUpClicked += Item_InventoryPickUpClicked;
+            Inventory.Children.Add(item);
+            deleteCommand.RaiseCanExecuteChanged();
+            dropCommand.RaiseCanExecuteChanged();
+            logger.Info($"({InventoryName})< AddItem(id: {id}, x: {x}, y: {y}, imagePath: {imagePath}, spanX: {spanX}, spanY: {spanY}, quantity: {quantity}, isStackable: {isStackable})");
         }
 
-        private void AddItem(ItemModel item, int x, int y, int quantity)
+        public void AddItem(ItemModel item, int x, int y, int quantity)
         {
-            AddItem(item.ID, item.Name, item.Type, item.Cost, item.Weight, item.Rarity, item.Attunement, item.Properties, item.Description, item.Source, x, y, item.ImageUri, item.CellSpanX, item.CellSpanY, quantity, item.IsStackable);
+            AddItem(item.ID, item.Name, item.Type, item.Cost, item.Weight, item.Rarity, item.Attunement, item.Properties, item.Description, item.Source, x, y, item.ImageUri, item.CellSpanX, item.CellSpanY, quantity, item.IsStackable, item);
+        }
+
+        private void Item_InventoryPickUpClicked(object sender)
+        {
+            InventoryPickUpClicked?.Invoke(sender, this);
         }
 
         private void Item_ItemDeleteClicked(Item sender)
         {
-            if (sender.GridParent.Children.Contains(sender))
+            DeleteItem(sender);
+        }
+
+        public void DeleteItem(Item item)
+        {
+            if (item.GridParent.Children.Contains(item))
             {
-                sender.GridParent.Children.Remove(sender);
-                sender.RemoveEvents();
+                item.GridParent.Children.Remove(item);
+                item.RemoveEvents();
+                dropCommand.RaiseCanExecuteChanged();
+                deleteCommand.RaiseCanExecuteChanged();
             }
         }
 
-        private Point? NextAvailableCell(int spanX, int spanY)
+        private Item[,] OccupiedGrid(Item currentItem = null)
         {
-            logger.Info($"({Name})> NextAvailableCell(spanX: {spanX}, spanY: {spanY})");
-            for (int y = 0; y < Inventory.RowDefinitions.Count; y++)
+            Item[,] grid = ArrayHelper.GetNew2DArray<Item>(Rows, Columns, null);
+            foreach (var invItem in Inventory.Children)
             {
-                for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
+                if (invItem is Item)
                 {
-                    bool cellAvailable = true;
-                    foreach (var invItem in Inventory.Children)
+                    var curItem = invItem as Item;
+                    if (currentItem != curItem)
                     {
-                        if (invItem is Item)
+                        for (int y = curItem.Model.CellY; y < curItem.Model.CellY + curItem.Model.CellSpanY; y++)
                         {
-                            var curItem = invItem as Item;
-                            if (gridCellsOccupied(x, y, spanX, spanY, curItem))
+                            for (int x = curItem.Model.CellX; x < curItem.Model.CellX + curItem.Model.CellSpanX; x++)
                             {
-                                cellAvailable = false;
+                                grid[y, x] = curItem;
                             }
                         }
                     }
+                }
+            }
+            return grid;
+        }
 
-                    if(cellAvailable)
+        public Point? NextAvailableCell(int spanX, int spanY)
+        {
+            logger.Info($"({InventoryName})> NextAvailableCell(spanX: {spanX}, spanY: {spanY})");
+
+            // Check if item even fits in grid
+            if (spanX <= Columns && spanY <= Rows)
+            {
+                Point? point = null;
+                var occupyGrid = OccupiedGrid();
+                for (int row = 0; row < Rows; row++)
+                {
+                    for (int column = 0; column < Columns; column++)
                     {
-                        var point = new Point(x, y);
-                        logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return({point})");
-                        return point;
+                        bool cellAvailable = (occupyGrid[row, column]==null);
+                        if ((row + spanY - 1) >= Rows || (column + spanX - 1) >= Columns)
+                        {
+                            cellAvailable = false;
+                        }
+                        for (int y = row; y < row + spanY && cellAvailable; y++)
+                        {
+                            for (int x = column; x < column + spanX && cellAvailable; x++)
+                            {
+                                if(occupyGrid[y,x]!=null)
+                                { 
+                                    cellAvailable = false;
+                                }
+                            }
+                        }
+                        if(cellAvailable)
+                        {
+                            point = new Point(column, row);
+                            logger.Info($"< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return({point.Value})");
+                            return point.Value;
+                        }
                     }
                 }
             }
 
-            logger.Info($"({Name})< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return(null)");
+            logger.Info($"({InventoryName})< NextAvailableCell(spanX: {spanX}, spanY: {spanY}).return(null)");
             return null;
         }
 
         private void Item_MousePressed(object sender, Point mousePosition)
         {
-            logger.Trace($"({Name})>< Item_MousePressed(sender: {sender}, mousePosition: {mousePosition})");
+            logger.Trace($"({InventoryName})>< Item_MousePressed(sender: {sender}, mousePosition: {mousePosition})");
             if (sender is Item)
             {
                 var item = sender as Item;
@@ -155,9 +488,10 @@ namespace InventoryControlLib
                 Panel.SetZIndex(item, 999);
             }
         }
+
         private void Item_SplitClicked(object sender)
         {
-            logger.Debug($"({Name})> Item_SplitClicked(sender: {sender})");
+            logger.Debug($"({InventoryName})> Item_SplitClicked(sender: {sender})");
             if (sender is Item)
             {
                 var item = sender as Item;
@@ -166,12 +500,47 @@ namespace InventoryControlLib
                 ItemSplitWindow detailWindow = new ItemSplitWindow(viewModel);
                 detailWindow.ShowDialog();
             }
-            logger.Debug($"({Name})< Item_SplitClicked(sender: {sender})");
+            logger.Debug($"({InventoryName})< Item_SplitClicked(sender: {sender})");
+        }
+
+        private void Item_StackClicked(object sender)
+        {
+            logger.Debug($"({InventoryName})> Item_StackClicked(sender: {sender})");
+            if (sender is Item)
+            {
+                List<Item> removedItems = new List<Item>();
+                var item = sender as Item;
+                foreach (var invItem in Inventory.Children)
+                {
+                    if (invItem is Item)
+                    {
+                        var curItem = invItem as Item;
+                        if (curItem == item)
+                        {
+                            continue;
+                        }
+                        else if(curItem.Model.ID == item.Model.ID)
+                        {
+                            item.Model.Quantity += curItem.Model.Quantity;
+                            removedItems.Add(curItem);
+                        }
+                    }
+                }
+                foreach (var curItem in removedItems)
+                {
+                    if (curItem.GridParent.Children.Contains(item))
+                    {
+                        curItem.GridParent.Children.Remove(curItem);
+                        curItem.RemoveEvents();
+                    }
+                }
+            }
+            logger.Debug($"({InventoryName})< Item_StackClicked(sender: {sender})");
         }
 
         private bool ItemDetailViewModel_SplitClicked(UiItemModel sender, int value)
         {
-            logger.Debug($"({Name})> ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value})");
+            logger.Debug($"({InventoryName})> ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value})");
             var cell = NextAvailableCell(sender.CellSpanX, sender.CellSpanY);
             if (cell.HasValue)
             {
@@ -180,39 +549,39 @@ namespace InventoryControlLib
                 logger.Debug($"< ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value}).return(True)");
                 return true;
             }
-            logger.Debug($"({Name})< ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value}).return(False)");
+            logger.Debug($"({InventoryName})< ItemDetailViewModel_SplitClicked(sender: {sender}, value: {value}).return(False)");
             return false;
         }
 
         private bool gridCellsOccupied(int newX, int newY, int spanX, int spanY, Item i2)
         {
-            logger.Debug($"({Name})> gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}])");
+            logger.Debug($"({InventoryName})> gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}])");
             var i1Start = new Point(newX, newY);
             var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
             var i2Start = new Point(i2.Model.CellX, i2.Model.CellY);
             var i2End = new Point(i2.Model.CellX + i2.Model.CellSpanX - 1, i2.Model.CellY + i2.Model.CellSpanY - 1);
 
             var result = (i2End.X >= i1Start.X && i2Start.X <= i1End.X) && (i2End.Y >= i1Start.Y && i2Start.Y <= i1End.Y);
-            logger.Debug($"({Name})< gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}]).return({result})");
+            logger.Debug($"({InventoryName})< gridCellsOccupied(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}, item: [{i2}]).return({result})");
             return result;
         }
 
         private bool IsWithinGridBoundary(int newX, int newY, int spanX, int spanY)
         {
-            logger.Debug($"({Name})> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY})");
+            logger.Debug($"({InventoryName})> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY})");
             var i1Start = new Point(newX, newY);
             var i1End = new Point(newX + spanX - 1, newY + spanY - 1);
             var i2Start = new Point(0, 0);
             var i2End = new Point(Inventory.ColumnDefinitions.Count - 1, Inventory.RowDefinitions.Count - 1);
 
             var result = (i1Start.X >= i2Start.X && i1End.X <= i2End.X) && (i1Start.Y >= i2Start.Y && i1End.Y <= i2End.Y);
-            logger.Debug($"({Name})> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}).reutn({result})");
+            logger.Debug($"({InventoryName})> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}).return({result})");
             return result;
         }
 
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)
         {
-            logger.Debug($"({Name})> ItemPositionUpdate(positionUpdate: {positionUpdate})");
+            logger.Debug($"({InventoryName})> ItemPositionUpdate(positionUpdate: {positionUpdate})");
             var item = positionUpdate.Item;
             var releasePoint = positionUpdate.Position;
 
@@ -242,41 +611,46 @@ namespace InventoryControlLib
 
                 bool cancelMove = false;
                 bool stacked = false;
-                foreach (var invItem in Inventory.Children)
-                {
-                    if (invItem is Item)
-                    {
-                        var curItem = invItem as Item;
-                        if (curItem == item)
-                        { 
-                            continue;
-                        }
-                        if (gridCellsOccupied(icellX, icellY, item.Model.CellSpanX, item.Model.CellSpanY, curItem))
-                        {
-                            if(item.Model.ID == curItem.Model.ID && item.Model.IsStackable)
-                            {
-                                curItem.Model.Quantity += item.Model.Quantity;
-                                stacked = true;
-                                break;
-                            }
-                            cancelMove = true;
-                            break;
-                        }
-                    }
-                }
                 if (!IsWithinGridBoundary(icellX, icellY, item.Model.CellSpanX, item.Model.CellSpanY))
                 {
                     cancelMove = true;
                 }
 
-                Point p = new Point(x, y);
+                var occupyGrid = OccupiedGrid(item);
+                if (occupyGrid[icellY, icellX] != null)
+                {
+                    if (item.Model.ID == occupyGrid[icellY, icellX].Model.ID && item.Model.IsStackable)
+                    {
+                        occupyGrid[icellY, icellX].Model.Quantity += item.Model.Quantity;
+                        stacked = true;
+                    }
+                    else
+                    {
+                        cancelMove = true;
+                    }
+                }
+
+                if (!cancelMove && !stacked)
+                {
+                    for (int itemY = icellY; itemY < icellY + item.Model.CellSpanY; itemY++)
+                    {
+                        for (int itemX = icellX; itemX < icellX + item.Model.CellSpanX; itemX++)
+                        {
+                            if (occupyGrid[itemY, itemX] != null)
+                            {
+                                cancelMove = true;
+                            }
+                        }
+                    }
+                }
+                
+
                 if (cancelMove)
                 {
                     var parentPoint = item.GridParent.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
                     var startingX = item.Model.CellX * CellWidth + parentPoint.X;
                     var startingY = item.Model.CellY * CellHeight + parentPoint.Y;
-                    p = new Point(startingX, startingY);
-                    item.Transform(p);
+                    item.Transform(new Point(startingX, startingY));
                 }
                 else
                 {
@@ -291,12 +665,13 @@ namespace InventoryControlLib
                         item.MouseReleased += Item_MouseReleased;
                         item.MousePressed += Item_MousePressed;
                         item.ItemSplitClicked += Item_SplitClicked;
+                        item.ItemStackClicked += Item_StackClicked;
                         item.ItemDeleteClicked += Item_ItemDeleteClicked;
                         Inventory.Children.Add(item);
                         item.GridParent = Inventory;
                         item.Model.CellX = icellX;
                         item.Model.CellY = icellY;
-                        item.Transform(p);
+                        item.Transform(new Point(x, y));
                     }
                 }
             }
@@ -304,13 +679,15 @@ namespace InventoryControlLib
             {
                 logger.Debug($"Ignored");
             }
+            deleteCommand.RaiseCanExecuteChanged();
+            dropCommand.RaiseCanExecuteChanged();
 
-            logger.Debug($"({Name})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
+            logger.Debug($"({InventoryName})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
         }
 
         private void CatalogItemPositionUpdate(CatalogItemPositionUpdate positionUpdate)
         {
-            logger.Debug($"({Name})> CatalogItemPositionUpdate(positionUpdate: {positionUpdate})");
+            logger.Debug($"({InventoryName})> CatalogItemPositionUpdate(positionUpdate: {positionUpdate})");
             var item = positionUpdate.Item;
             var releasePoint = positionUpdate.Position;
 
@@ -379,17 +756,32 @@ namespace InventoryControlLib
                 logger.Debug($"Ignored");
             }
 
-            logger.Debug($"({Name})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
+            logger.Debug($"({InventoryName})< ItemPositionUpdate(positionUpdate: {positionUpdate})");
         }
 
         private void Item_MouseReleased(object sender, Point mousePosition)
         {
-            logger.Trace($"({Name})>< Item_MouseReleased(sender: {sender}, mousePosition: {mousePosition})");
+            logger.Trace($"({InventoryName})>< Item_MouseReleased(sender: {sender}, mousePosition: {mousePosition})");
             if (sender is Item)
             {
                 var item = sender as Item;
                 Panel.SetZIndex(this, 1);
                 Panel.SetZIndex(item, 2);
+            }
+        }
+
+        public List<Item> GetAllItems()
+        {
+            return Inventory.Children.OfType<Item>().ToList();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChange(string propertyName)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
             }
         }
 

@@ -23,7 +23,7 @@ namespace DNDinventory.ViewModel
             Bitmap img = new Bitmap(images[random]);
             var color = img.GetPixel(randomGen.Next(img.Width), randomGen.Next(img.Height));
             ShadowColor = System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
-            ImagePath = new Uri(images[random], UriKind.Relative);
+            ImagePath = Path.GetFullPath(images[random]);
 
             progress = 0;
         }
@@ -62,8 +62,8 @@ namespace DNDinventory.ViewModel
             }
         }
 
-        Uri imagePath;
-        public Uri ImagePath
+        string imagePath;
+        public string ImagePath
         {
             get 
             {

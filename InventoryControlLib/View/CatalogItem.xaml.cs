@@ -95,6 +95,14 @@ namespace InventoryControlLib.View
             var editWindow = new ItemEditWindow(viewModel);
             editWindow.ShowDialog();
 
+            popup = new Popup
+            {
+                Child = new CatalogItem(hub, Model, true),
+                PlacementTarget = this,
+                Placement = PlacementMode.Relative,
+                AllowsTransparency = true
+            };
+
             SaveCatalog?.Invoke(this);
 
             logger.Info($"< ExecuteEdit()");

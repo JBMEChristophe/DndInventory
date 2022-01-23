@@ -20,12 +20,16 @@ using System.Windows;
 using InventoryControlLib.View;
 using InventoryControlLib.Model;
 using Utilities;
+using InventoryControlLib.ViewModel;
+using InventoryControlLib;
+using DNDinventory.View;
 
 namespace DNDinventory.ViewModel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private const string version = "0.1.0";
+        private const string VERSION = "0.2.0";
+        private string NO_IMAGE;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private readonly IMessageHub hub;
@@ -35,26 +39,160 @@ namespace DNDinventory.ViewModel
         private string outputFolder;
         private string settingsFileLocation;
         private Timer timerOverallProgress;
+        private List<Guid> skipInventorySaveGuids;
+        private ItemTypeSettingManager itemTypeSettingManager;
 
         private const string catalogItemsPath = "Catalogs/Items.xml";
+        private const string inventoriesPath = "Inventories/";
+        private const string inventoriesInfoPath = "Inventories/InventoryInfo.xml";
 
         private bool serverRunning;
 
-        private void AddInventory(string name, Size size)
+        private void SaveInventories()
+        {
+            logger.Debug($"> SaveInventories()");
+            var infos = new List<InventorySaveInfo>();
+            foreach (InventoryGrid inventory in InventoryContent.Children)
+            {
+                if (!skipInventorySaveGuids.Contains(inventory.Id))
+                {
+                    string path = Path.Combine(inventoriesPath, $"{inventory.Id}.xml");
+                    inventory.Save(path);
+                    infos.Add(new InventorySaveInfo
+                    {
+                        Name = inventory.InventoryName,
+                        Size = new Size(inventory.Columns, inventory.Rows),
+                        Path = path
+                    });
+                }
+            }
+            var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+            defaultBackpackInv.Save(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+            XmlHelper<List<InventorySaveInfo>>.WriteToXml(inventoriesInfoPath, infos);
+            logger.Debug($"< SaveInventories()");
+        }
+
+        private void LoadInventories()
+        {
+            logger.Debug($"> LoadInventories()");
+            if (File.Exists(inventoriesInfoPath))
+            {
+                var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(inventoriesInfoPath);
+                if (infos != null)
+                {
+                    foreach (InventorySaveInfo info in infos)
+                    {
+                        var invGuid = AddInventory(info.Name, NO_IMAGE, info.Size);
+                        var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
+
+                        if (File.Exists(info.Path))
+                        {
+                            inventory.Load(info.Path);
+                            File.Delete(info.Path);
+                        }
+                    }
+                }
+                File.Delete(inventoriesInfoPath);
+            }
+
+            var defaultBackpack = Path.Combine(inventoriesPath, $"DefaultBackpack.xml");
+            if (File.Exists(defaultBackpack))
+            {
+                var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+                defaultBackpackInv.Load(defaultBackpack);
+                File.Delete(defaultBackpack);
+            }
+            logger.Debug($"< LoadInventories()");
+        }
+
+        private Guid AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
         {
             logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
-            var inv = new InventoryControlLib.InventoryGrid()
-            {
-                Columns = (int)size.Width,
-                Rows = (int)size.Height,
-                MessageHub = Hub,
-                Name = name
-            };
+            var inv = new InventoryGrid(name, backgroundPath, size, Hub, canBeEdited, canBeDeleted);
+            inv.InventoryRemoved += Inv_InventoryRemoved;
+            inv.InventoryPickUpClicked += Inv_InventoryPickUpClicked;
             inv.Init();
 
             InventoryContent.Children.Add(inv);
             OnPropertyChange("InventoryContent");
             logger.Debug($"< AddInventory({name}, {size})");
+            return inv.Id;
+        }
+
+        private void Inv_InventoryPickUpClicked(object sender, InventoryGrid grid)
+        {
+            if(sender is Item)
+            {
+                var item = sender as Item;
+                if(item.Model is InventoryItemModel)
+                {
+                    var inventoryItemModel = item.Model as InventoryItemModel;
+                    var invGuid = AddInventory(inventoryItemModel.Name, inventoryItemModel.ImageUri, inventoryItemModel.Size);
+                    var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
+                    foreach (var invItem in inventoryItemModel.Items)
+                    {
+                        inventory.AddItem(invItem, invItem.CellX, invItem.CellY, invItem.Quantity);
+                    }
+                    grid.DeleteItem(item);
+                }
+            }
+        }
+
+        private bool Inv_InventoryRemoved(InventoryControlLib.InventoryGrid sender, bool drop)
+        {
+            logger.Debug($"> Inv_InventoryRemoved({sender.InventoryName}, {drop})");
+
+            if (drop)
+            {
+                if (MessageBox.Show($"Do you want to drop {sender.InventoryName}?", $"Drop {sender.InventoryName}?", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    var ground = GridManager.Instance.GroundGrid;
+                    var nextCell = ground.Inventory.NextAvailableCell(1, 1);
+                    if (nextCell.HasValue)
+                    {
+                        var items = sender.GetAllItems().Select(x => x.Model).ToList();
+                        var item = new InventoryItemModel($"{sender.InventoryName}_" + Guid.NewGuid(), $"{sender.InventoryName}", new Size(sender.Columns, sender.Rows), (int)nextCell.Value.X, (int)nextCell.Value.Y, items, sender.InventoryBackground);
+                        ground.Inventory.AddItem(item, item.CellX, item.CellY, 1);
+                    }
+                    else
+                    {
+                        logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
+                        return false;
+                    }
+                }
+                else
+                {
+                    logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
+                    return false;
+                }
+                InventoryContent.Children.Remove(sender);
+                OnPropertyChange("InventoryContent");
+                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(true)");
+                return true;
+            }
+
+            // Select where to move the items to
+            var invSelectViewModel = new InventorySelectViewModel(new List<Guid>() { sender.Id });
+            var invSelectWindow = new InventorySelectWindow(invSelectViewModel);
+            invSelectWindow.Owner = Application.Current.MainWindow;
+            invSelectWindow.ShowDialog();
+            if (invSelectViewModel.DialogResult == WinForms.DialogResult.Cancel)
+            {
+                logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(false)");
+                return false; 
+            }
+
+            var moveToId = invSelectViewModel.SelectedGridId;
+            hub.Publish(new MoveAllItemsTo
+            {
+                MoveToId = moveToId,
+                Items = sender.GetAllItems(),
+                FallBackIds = invSelectViewModel.SelectedFallbackGridId.ToList()
+            });
+            InventoryContent.Children.Remove(sender);
+            OnPropertyChange("InventoryContent");
+            logger.Debug($"< Inv_InventoryRemoved({sender.InventoryName}, {drop}).Return(true)");
+            return true;
         }
 
         public void AddItemToCatalog(CatalogItemModel item)
@@ -64,7 +202,7 @@ namespace DNDinventory.ViewModel
             item.Height = 50 * item.CellSpanY;
             if (string.IsNullOrEmpty(item.ImageUri))
             {
-                item.ImageUri = "Images/No_image_available.png";
+                item.ImageUri = NO_IMAGE;
             }
 
             Application.Current.Dispatcher.Invoke(() =>
@@ -89,24 +227,67 @@ namespace DNDinventory.ViewModel
         private void SaveCatalog(object sender = null)
         {
             logger.Info($"> SaveCatalog()");
+            if(sender is CatalogItem)
+            {
+                var catalogItem = sender as CatalogItem;
+
+                if (catalogItemModels.Where(i => i.ID == catalogItem.Model.ID).Count() == 0)
+                {
+                    catalogItemModels.Add(catalogItem.Model);
+                }
+            }
             XmlHelper<List<CatalogItemModel>>.WriteToXml(catalogItemsPath, catalogItemModels);
             logger.Info($"> SaveCatalog()");
         }
 
-        public Task<bool> SetupInv(IProgress<double> progressUpdate)
+        struct DefaultInventoryItem
         {
+            public DefaultInventoryItem(Size size, bool edit, bool delete)
+            {
+                Size = size;
+                EditRights = edit;
+                DeleteRights = delete;
+            }
+
+            public Size Size;
+            public bool EditRights;
+            public bool DeleteRights;
+        }
+
+        public Task<bool> SetupDefaultInv(IProgress<double> progressUpdate)
+        {
+            var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
+
             return Task.Run(() =>
             {
                 logger.Debug($"> setupInv()");
-                string[] test = { "Inv1", "Inv", "Inv3", "MegaInv" };
-                int[,] test2 = { { 3, 7 }, { 5, 5 }, { 4, 5 }, { 15, 25 } };
-                for (int i = 0; i < test.Length; i++)
+
+                Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
+                {
+                    { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
+                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), false, false)},
+                };
+                foreach (var inventory in defaultInventories)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        AddInventory(test[i], new Size(test2[i, 0], test2[i, 1]));
+                        var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
+                        skipInventorySaveGuids.Add(id);
+
+                        if (inventory.Key == "Ground")
+                        {
+                            GridManager.Instance.GroundId = id;
+                        }
+                        if (inventory.Key == "Backpack")
+                        {
+                            GridManager.Instance.BackPackId = id;
+                        }
                     });
                 }
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LoadInventories();
+                });
 
                 double index = 0.0;
                 double progress = 0.0;
@@ -118,6 +299,11 @@ namespace DNDinventory.ViewModel
                     catalogItems = XmlHelper<List<CatalogItemModel>>.ReadFromXml(catalogItemsPath);
                     foreach (var item in catalogItems)
                     {
+                        string imagePath = $@"Images\Items\{item.Source}\{item.Name}.jpg";
+                        if (File.Exists(imagePath))
+                        {
+                            item.ImageUri = imagePath;
+                        }
                         catalogItemModels.Add(item);
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
@@ -125,9 +311,21 @@ namespace DNDinventory.ViewModel
                 }
                 foreach (var item in defaultCatalogItems)
                 {
+                    if (reduced_loading && index > 10) break;
                     if (catalogItems.Where(i => i.ID == item.ID).Count() == 0)
                     {
+                        string imagePath = $@"Images\Items\{item.Name}.jpg";
+                        if (File.Exists(imagePath))
+                        {
+                            item.ImageUri = imagePath;
+                        }
                         item.IsDefault = true;
+                        var setting = itemTypeSettingManager.GetSetting(item.Type.FirstOrDefault());
+                        if(setting!=null)
+                        {
+                            item.CellSpanX = setting.ColumnSpan;
+                            item.CellSpanY = setting.RowSpan;
+                        }
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
@@ -203,7 +401,7 @@ namespace DNDinventory.ViewModel
         {
             get
             {
-                return version;
+                return VERSION;
             }
         }
 
@@ -586,6 +784,33 @@ namespace DNDinventory.ViewModel
             return true;
         }
 
+        DelegateCommand addInventoryCommand;
+        public ICommand AddInventoryCommand
+        {
+            get
+            {
+                if (addInventoryCommand == null)
+                {
+                    addInventoryCommand = new DelegateCommand(ExecuteAddInventoryCommand);
+                }
+                return addInventoryCommand;
+            }
+        }
+
+        private void ExecuteAddInventoryCommand()
+        {
+            logger.Info($"> ExecuteAddInventoryCommand()");
+            InventoryEditorViewModel viewModel = new InventoryEditorViewModel("Backpack", NO_IMAGE, true);
+            InventoryEditorWindow inventoryEditorWindow = new InventoryEditorWindow(viewModel);
+            inventoryEditorWindow.ShowDialog();
+
+            if (viewModel.Saved)
+            {
+                AddInventory(viewModel.InventoryName, viewModel.BackgroundPath, new Size(viewModel.XValue, viewModel.YValue));
+            }
+            logger.Info($"< ExecuteAddInventoryCommand()");
+        }
+
         DelegateCommand setOutputFolderCommand;
         public ICommand SetOutputFolderCommand
         {
@@ -953,12 +1178,19 @@ namespace DNDinventory.ViewModel
         public MainViewModel()
         {
             logger.Info($"> MainViewModel()");
+            var tmp_NO_IMAGE = new Uri(@"Images\No_image_available.png", UriKind.Relative);
+            if (!tmp_NO_IMAGE.IsAbsoluteUri)
+            {
+                tmp_NO_IMAGE = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, tmp_NO_IMAGE.ToString()), UriKind.Absolute);
+            }
+            NO_IMAGE = tmp_NO_IMAGE.AbsoluteUri;
             transferClients = new List<TransferClient>();
             hub = new MessageHub();
             listener = new Listener();
             listener.Accepted += Listener_Accepted;
             settingsFileHandler = new SettingsFileHandler();
             catalogItemModels = new List<CatalogItemModel>();
+            skipInventorySaveGuids = new List<Guid>();
 
             timerOverallProgress = new Timer();
             timerOverallProgress.Interval = 1000;
@@ -966,23 +1198,33 @@ namespace DNDinventory.ViewModel
 
             initDefaults();
 
+            ExecuteQuickLoadSettings();
+
             Transfers = new ObservableCollection<KeyValuePair<string, Transfer>>();
 
             if (!Directory.Exists(outputFolder))
             {
                 Directory.CreateDirectory(outputFolder);
             }
+
+            itemTypeSettingManager = new ItemTypeSettingManager();
+            var typeSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultTypeSettings.xml");
+            itemTypeSettingManager.LoadOrCreateAndSaveDefault(typeSettingsPath);
+
             logger.Info($"< MainViewModel()");
         }
 
         public void OnWindowClosing(object sender, CancelEventArgs e)
         {
             logger.Info($"> OnWindowClosing()");
+            e.Cancel = true;
+            SaveInventories();
             foreach (var client in transferClients)
             {
                 deregisterEvents(client);
             }
             Properties.Settings.Default.Save();
+            e.Cancel = false;
             logger.Info($"< OnWindowClosing()");
         }
 
@@ -990,7 +1232,6 @@ namespace DNDinventory.ViewModel
         {
             logger.Debug($"> initDefaults()");
             settingsFileLocation = Properties.Settings.Default.SettingsFileLocation;
-            ExecuteQuickLoadSettings();
             ConnectionStatus = "No connection";
             ConnectText = "Connect";
             serverRunning = false;
@@ -1001,16 +1242,16 @@ namespace DNDinventory.ViewModel
         }
 
         private void UpdateSavedSettings() {
-            Host = settingsFileHandler.currentSettings.host;
-            Port = settingsFileHandler.currentSettings.port;
-            outputFolder = settingsFileHandler.currentSettings.outputFolder;
+            Host = settingsFileHandler.currentSettings.Host;
+            Port = settingsFileHandler.currentSettings.Port;
+            outputFolder = settingsFileHandler.currentSettings.OutputFolder;
             SetFolderOutputTxt = outputFolder;
         }
 
         private void PrepareSavedSettings() {
-            settingsFileHandler.currentSettings.host = host;
-            settingsFileHandler.currentSettings.port = port;
-            settingsFileHandler.currentSettings.outputFolder = outputFolder;
+            settingsFileHandler.currentSettings.Host = host;
+            settingsFileHandler.currentSettings.Port = port;
+            settingsFileHandler.currentSettings.OutputFolder = outputFolder;
         }
 
         private void TimerOverallProgress_Elapsed(object sender, ElapsedEventArgs e)

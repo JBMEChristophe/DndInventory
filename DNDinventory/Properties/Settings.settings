@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="SettingsFileLocation" Type="System.String" Scope="User">
-      <Value Profile="(Default)">settingsfile.xml</Value>
+      <Value Profile="(Default)">DefaultSettings.xml</Value>
     </Setting>
   </Settings>
 </SettingsFile>

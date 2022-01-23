@@ -7,19 +7,32 @@ using System.IO;
 using System.Threading.Tasks;
 using static DNDinventory.UpdatePolicy;
 using Utilities;
+using System.ComponentModel;
 
 namespace DNDinventory
 {
+    public enum DebugSetting
+    {
+        [Description("None")]
+        None,
+        [Description("Reduced Item Loading")]
+        ReducedItemLoading
+    }
+
     public class Settings 
     {
         // Set defaults here
-        public string host = "localhost";
-        public string port = "100";
-        public string outputFolder = "Transfers";
+        public string Host = "localhost";
+        public string Port = "100";
+        public string OutputFolder = "Transfers";
+        public string ImagesFolder = "Images";
+        public string CatalogFolder = "Catalogs";
+        public string InventoriesFolder = "Inventories";
+        public DebugSetting Debug = DebugSetting.None;
 
         public override string ToString()
         {
-            return $"host: {host}; port: {port}; outputFolder:{outputFolder}";
+            return $"host: {Host}; port: {Port}; outputFolder:{OutputFolder}; ImagesFolder:{ImagesFolder}; CatalogFolder:{CatalogFolder}; InventoriesFolder:{InventoriesFolder}; Debug:{EnumHelper.GetDescriptionFromEnumValue(Debug)}";
         }
     }
 
@@ -64,7 +77,7 @@ namespace DNDinventory
                 if (settings != null)
                 {
                     logger.Debug("Set current settings by using SettingsV0");
-                    currentSettings = new Settings { host = settings.host, port = settings.port, outputFolder = settings.outputFolder };
+                    currentSettings = new Settings { Host = settings.host, Port = settings.port, OutputFolder = settings.outputFolder };
                     logger.Trace($"new settings: [{currentSettings}]");
                     WriteToXml(filename);
                 }

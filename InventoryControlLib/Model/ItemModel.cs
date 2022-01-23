@@ -150,6 +150,24 @@ namespace InventoryControlLib.Model
             }
         }
 
+        [XmlIgnore]
+        public bool ShowInventoryItemTooltip
+        {
+            get
+            {
+                return Type.Contains(ItemType.Inventory);
+            }
+        }
+
+        [XmlIgnore]
+        public bool HideInventoryItemTooltip
+        {
+            get
+            {
+                return !ShowInventoryItemTooltip;
+            }
+        }
+
         string cost;
         public string Cost
         {
@@ -347,10 +365,10 @@ namespace InventoryControlLib.Model
                 else
                 {
                     imageUri = new Uri(value, UriKind.RelativeOrAbsolute);
-                    if(!imageUri.IsAbsoluteUri)
-                    {
-                        imageUri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString()), UriKind.Absolute);
-                    }
+                }
+                if (!imageUri.IsAbsoluteUri)
+                {
+                    imageUri = new Uri(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imageUri.ToString()), UriKind.Absolute);
                 }
                 OnPropertyChange("ImageUri");
                 OnPropertyChange("Image");

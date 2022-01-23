@@ -36,6 +36,9 @@
                 </StackPanel>
                 <MenuItem Header="{Binding ConnectText}" Command="{Binding ConnectCommand}"/>
             </MenuItem>
+            <MenuItem Header="_Inventories">
+                <MenuItem Header="Add new inventory" Command="{Binding AddInventoryCommand}"/>
+            </MenuItem>
             <MenuItem Header="Settings">
                 <MenuItem Header="{Binding SetFolderOutputTxt}" Command="{Binding SetOutputFolderCommand}"/>
                 <Separator/>
@@ -52,16 +55,17 @@
         </Menu>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="133*"/>
+                <ColumnDefinition Width="632*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <cc:CustomScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Content="{Binding InventoryContent}" Canvas.ZIndex="1"/>
-            <Expander Grid.Column="1" FlowDirection="RightToLeft">
+            <cc:CustomScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Content="{Binding InventoryContent}" Canvas.ZIndex="1" Grid.ColumnSpan="2" Margin="0,0,0,0.04"/>
+            <Expander Grid.Column="2" FlowDirection="RightToLeft" ExpandDirection="Right" Margin="0,0,0,0.04">
                 <ContentControl FlowDirection="LeftToRight" Margin="5" Content="{Binding Catalog}" Canvas.ZIndex="2" />
             </Expander>
         </Grid>
-        <Expander Margin="5" Grid.Row="2">
+        <Expander Margin="5" Grid.Row="2" ExpandDirection="Up">
             <Expander.Header>
                 <DockPanel VerticalAlignment="Stretch">
                     <Grid>
@@ -71,7 +75,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Grid.Column="0" Text="Connection:" />
-                            <TextBlock Grid.Column="0" Text="{Binding ConnectionStatus}" />                            
+                            <TextBlock Grid.Column="0" Text="{Binding ConnectionStatus}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="322,0,0,0">
                             <TextBlock Margin="10,0,0,0" Text="Overall Progress" />

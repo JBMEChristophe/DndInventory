@@ -105,6 +105,7 @@
     <Compile Include="Model\InventoryItemModel.cs" />
     <Compile Include="Model\ItemType.cs" />
     <Compile Include="Model\InventorySaveModel.cs" />
+    <Compile Include="Model\ItemTypeSettings.cs" />
     <Compile Include="Model\UiItemModel.cs" />
     <Compile Include="ViewModel\AmountViewModel.cs" />
     <Compile Include="ViewModel\InventoryEditorViewModel.cs" />

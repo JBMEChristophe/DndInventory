@@ -40,6 +40,7 @@ namespace DNDinventory.ViewModel
         private string settingsFileLocation;
         private Timer timerOverallProgress;
         private List<Guid> skipInventorySaveGuids;
+        private ItemTypeSettingManager itemTypeSettingManager;
 
         private const string catalogItemsPath = "Catalogs/Items.xml";
         private const string inventoriesPath = "Inventories/";
@@ -260,6 +261,7 @@ namespace DNDinventory.ViewModel
             return Task.Run(() =>
             {
                 logger.Debug($"> setupInv()");
+
                 Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
                 {
                     { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
@@ -318,6 +320,12 @@ namespace DNDinventory.ViewModel
                             item.ImageUri = imagePath;
                         }
                         item.IsDefault = true;
+                        var setting = itemTypeSettingManager.GetSetting(item.Type.FirstOrDefault());
+                        if(setting!=null)
+                        {
+                            item.CellSpanX = setting.ColumnSpan;
+                            item.CellSpanY = setting.RowSpan;
+                        }
                         AddItemToCatalog(item);
                         UpdateProcess(ref index, catalogItems.Count + defaultCatalogItems.Count, ref progress, progressUpdate);
                     }
@@ -1198,6 +1206,11 @@ namespace DNDinventory.ViewModel
             {
                 Directory.CreateDirectory(outputFolder);
             }
+
+            itemTypeSettingManager = new ItemTypeSettingManager();
+            var typeSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultTypeSettings.xml");
+            itemTypeSettingManager.LoadOrCreateAndSaveDefault(typeSettingsPath);
+
             logger.Info($"< MainViewModel()");
         }
 

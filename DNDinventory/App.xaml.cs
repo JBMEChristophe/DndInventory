@@ -48,7 +48,7 @@ namespace DNDinventory
                   {
                       mainWindow = new MainWindow(mainViewModel);
                       this.MainWindow = mainWindow;
-                      mainViewModel.SetupDefaultInv(progress);
+                      mainViewModel.SetupCatalog(progress);
                   });
             });
 

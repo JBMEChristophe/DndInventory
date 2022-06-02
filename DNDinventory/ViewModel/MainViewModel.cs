@@ -44,7 +44,7 @@ namespace DNDinventory.ViewModel
 
         private const string catalogItemsPath = "Catalogs/Items.xml";
         private const string inventoriesPath = "Inventories/";
-        private const string inventoriesInfoPath = "Inventories/InventoryInfo.xml";
+        private const string inventoriesInfoPath = "InventoryInfo.xml";
 
         private bool serverRunning;
 
@@ -66,18 +66,24 @@ namespace DNDinventory.ViewModel
                     });
                 }
             }
-            var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
-            defaultBackpackInv.Save(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
-            XmlHelper<List<InventorySaveInfo>>.WriteToXml(inventoriesInfoPath, infos);
+            if (GridManager.Instance.Grids.Count > 0)
+            {
+                var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
+                defaultBackpackInv.Save(Path.Combine(inventoriesPath, $"DefaultBackpack.xml"));
+                var defaultGroundInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.GroundId).First().Inventory;
+                defaultGroundInv.Save(Path.Combine(inventoriesPath, $"DefaultGround.xml"));
+            }
+            XmlHelper<List<InventorySaveInfo>>.WriteToXml(Path.Combine(inventoriesPath, inventoriesInfoPath), infos);
             logger.Debug($"< SaveInventories()");
         }
 
         private void LoadInventories()
         {
             logger.Debug($"> LoadInventories()");
-            if (File.Exists(inventoriesInfoPath))
+            ClearInventories();
+            if (File.Exists(Path.Combine(inventoriesPath, inventoriesInfoPath)))
             {
-                var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(inventoriesInfoPath);
+                var infos = XmlHelper<List<InventorySaveInfo>>.ReadFromXml(Path.Combine(inventoriesPath, inventoriesInfoPath));
                 if (infos != null)
                 {
                     foreach (InventorySaveInfo info in infos)
@@ -88,11 +94,11 @@ namespace DNDinventory.ViewModel
                         if (File.Exists(info.Path))
                         {
                             inventory.Load(info.Path);
-                            File.Delete(info.Path);
+                            //File.Delete(info.Path);
                         }
                     }
                 }
-                File.Delete(inventoriesInfoPath);
+                //File.Delete(Path.Combine(inventoriesPath, inventoriesInfoPath));
             }
 
             var defaultBackpack = Path.Combine(inventoriesPath, $"DefaultBackpack.xml");
@@ -100,7 +106,14 @@ namespace DNDinventory.ViewModel
             {
                 var defaultBackpackInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.BackPackId).First().Inventory;
                 defaultBackpackInv.Load(defaultBackpack);
-                File.Delete(defaultBackpack);
+                //File.Delete(defaultBackpack);
+            }
+            var defaultGround = Path.Combine(inventoriesPath, $"DefaultGround.xml");
+            if (File.Exists(defaultGround))
+            {
+                var defaultGroundInv = GridManager.Instance.Grids.Where(e => e.Id == GridManager.Instance.GroundId).First().Inventory;
+                defaultGroundInv.Load(defaultGround);
+                //File.Delete(defaultBackpack);
             }
             logger.Debug($"< LoadInventories()");
         }
@@ -254,41 +267,12 @@ namespace DNDinventory.ViewModel
             public bool DeleteRights;
         }
 
-        public Task<bool> SetupDefaultInv(IProgress<double> progressUpdate)
+        public Task<bool> SetupCatalog(IProgress<double> progressUpdate)
         {
             var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
-
             return Task.Run(() =>
             {
-                logger.Debug($"> setupInv()");
-
-                Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
-                {
-                    { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
-                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), false, false)},
-                };
-                foreach (var inventory in defaultInventories)
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
-                        skipInventorySaveGuids.Add(id);
-
-                        if (inventory.Key == "Ground")
-                        {
-                            GridManager.Instance.GroundId = id;
-                        }
-                        if (inventory.Key == "Backpack")
-                        {
-                            GridManager.Instance.BackPackId = id;
-                        }
-                    });
-                }
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    LoadInventories();
-                });
-
+                logger.Debug($"> SetupCatalog()");
                 double index = 0.0;
                 double progress = 0.0;
                 List<CatalogItemModel> catalogItems = new List<CatalogItemModel>();
@@ -321,7 +305,7 @@ namespace DNDinventory.ViewModel
                         }
                         item.IsDefault = true;
                         var setting = itemTypeSettingManager.GetSetting(item.Type.FirstOrDefault());
-                        if(setting!=null)
+                        if (setting != null)
                         {
                             item.CellSpanX = setting.ColumnSpan;
                             item.CellSpanY = setting.RowSpan;
@@ -332,10 +316,50 @@ namespace DNDinventory.ViewModel
                 }
                 progress = index / Convert.ToDouble(catalogItems.Count) * 100.0;
                 progressUpdate.Report(progress);
-
-                logger.Debug($"< setupInv()");
+                logger.Debug($"< SetupCatalog()");
                 return true;
             });
+        }
+
+        public void ClearInventories()
+        {
+            InventoryContent.Children.Clear();
+            skipInventorySaveGuids.Clear();
+
+            SetupDefaultInv();
+        }
+
+        public bool SetupDefaultInv()
+        {
+            var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
+
+            logger.Debug($"> setupInv()");
+
+            Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
+                {
+                    { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
+                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), false, false)},
+                };
+            foreach (var inventory in defaultInventories)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
+                    skipInventorySaveGuids.Add(id);
+
+                    if (inventory.Key == "Ground")
+                    {
+                        GridManager.Instance.GroundId = id;
+                    }
+                    if (inventory.Key == "Backpack")
+                    {
+                        GridManager.Instance.BackPackId = id;
+                    }
+                });
+            }
+
+            logger.Debug($"< setupInv()");
+            return true;
         }
 
         private StackPanel inventoryContent;
@@ -693,12 +717,12 @@ namespace DNDinventory.ViewModel
 
         private void ExecuteSendFile()
         {
-            logger.Info($"> ExecuteSendFile()");
             if (transferClients.Count <= 0)
             {
                 return;
             }
 
+            logger.Info($"> ExecuteSendFile()");
             try
             {
                 using (WinForms.OpenFileDialog ofd = new WinForms.OpenFileDialog())
@@ -809,6 +833,46 @@ namespace DNDinventory.ViewModel
                 AddInventory(viewModel.InventoryName, viewModel.BackgroundPath, new Size(viewModel.XValue, viewModel.YValue));
             }
             logger.Info($"< ExecuteAddInventoryCommand()");
+        }
+
+        DelegateCommand loadInventoryCommand;
+        public ICommand LoadInventoryCommand
+        {
+            get
+            {
+                if (loadInventoryCommand == null)
+                {
+                    loadInventoryCommand = new DelegateCommand(ExecuteLoadInventoryCommand);
+                }
+                return loadInventoryCommand;
+            }
+        }
+
+        private void ExecuteLoadInventoryCommand()
+        {
+            logger.Info($"> ExecuteLoadInventoryCommand()");
+            LoadInventories();
+            logger.Info($"< ExecuteLoadInventoryCommand()");
+        }
+
+        DelegateCommand saveInventoryCommand;
+        public ICommand SaveInventoryCommand
+        {
+            get
+            {
+                if (saveInventoryCommand == null)
+                {
+                    saveInventoryCommand = new DelegateCommand(ExecuteSaveInventoryCommand);
+                }
+                return saveInventoryCommand;
+            }
+        }
+
+        private void ExecuteSaveInventoryCommand()
+        {
+            logger.Info($"> ExecuteSaveInventoryCommand()");
+            SaveInventories();
+            logger.Info($"< ExecuteSaveInventoryCommand()");
         }
 
         DelegateCommand setOutputFolderCommand;
@@ -1210,6 +1274,7 @@ namespace DNDinventory.ViewModel
             itemTypeSettingManager = new ItemTypeSettingManager();
             var typeSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultTypeSettings.xml");
             itemTypeSettingManager.LoadOrCreateAndSaveDefault(typeSettingsPath);
+            SetupDefaultInv();
 
             logger.Info($"< MainViewModel()");
         }
@@ -1218,7 +1283,7 @@ namespace DNDinventory.ViewModel
         {
             logger.Info($"> OnWindowClosing()");
             e.Cancel = true;
-            SaveInventories();
+            //SaveInventories();
             foreach (var client in transferClients)
             {
                 deregisterEvents(client);

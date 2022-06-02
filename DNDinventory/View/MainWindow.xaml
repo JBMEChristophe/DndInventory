@@ -37,6 +37,8 @@
                 <MenuItem Header="{Binding ConnectText}" Command="{Binding ConnectCommand}"/>
             </MenuItem>
             <MenuItem Header="_Inventories">
+                <MenuItem Header="Load inventory" Command="{Binding LoadInventoryCommand}"/>
+                <MenuItem Header="Save inventory" Command="{Binding SaveInventoryCommand}"/>
                 <MenuItem Header="Add new inventory" Command="{Binding AddInventoryCommand}"/>
             </MenuItem>
             <MenuItem Header="Settings">

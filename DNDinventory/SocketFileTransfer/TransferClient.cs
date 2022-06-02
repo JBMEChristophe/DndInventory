@@ -109,10 +109,7 @@ namespace DNDinventory.SocketFileTransfer
                 packetWriter.Write(queue.Length);
                 Send(packetWriter.GetBytes());
 
-                if (Queued != null)
-                {
-                    Queued(this, queue);
-                }
+                Queued?.Invoke(this, queue);
             }
             catch (Exception ex)
             {
@@ -139,10 +136,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Stop();
             }
 
-            if (Stopped != null)
-            {
-                Stopped(this, queue);
-            }
+            Stopped?.Invoke(this, queue);
 
             PacketWriter packetWriter = new PacketWriter();
             packetWriter.Write((byte)Headers.Stop);
@@ -160,10 +154,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.Pause();
             }
 
-            if (Paused != null)
-            {
-                Paused(this, queue);
-            }
+            Paused?.Invoke(this, queue);
 
             PacketWriter packetWriter = new PacketWriter();
             packetWriter.Write((byte)Headers.Pause);
@@ -258,10 +249,7 @@ namespace DNDinventory.SocketFileTransfer
 
                         _transfers.Add(id, queue);
 
-                        if (Queued != null)
-                        {
-                            Queued(this, queue);
-                        }
+                        Queued?.Invoke(this, queue);
                     }
                     break;
                 case Headers.Start:
@@ -286,10 +274,7 @@ namespace DNDinventory.SocketFileTransfer
                             queue.Stop();
                             queue.Close();
 
-                            if (Stopped !=null)
-                            {
-                                Stopped(this, queue);
-                            }
+                            Stopped?.Invoke(this, queue);
 
                             _transfers.Remove(id);
                         }
@@ -309,10 +294,7 @@ namespace DNDinventory.SocketFileTransfer
                                 queue.Pause();
                             }
 
-                            if (Paused != null)
-                            {
-                                Paused(this, queue);
-                            }
+                            Paused?.Invoke(this, queue);
                         }
                     }
                     break;
@@ -333,19 +315,13 @@ namespace DNDinventory.SocketFileTransfer
                         {
                             queue.LastProgress = queue.Progress;
 
-                            if (ProgressChanged!=null)
-                            {
-                                ProgressChanged(this, queue);
-                            }
+                            ProgressChanged?.Invoke(this, queue);
 
                             if (queue.Progress==100)
                             {
                                 queue.Close();
 
-                                if (Complete!=null)
-                                {
-                                    Complete(this, queue);
-                                }
+                                Complete?.Invoke(this, queue);
                             }
                         }
                     }

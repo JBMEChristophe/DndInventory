@@ -167,23 +167,26 @@ namespace DNDinventory.SocketFileTransfer
 
         public int GetOverallProgress()
         {
-            logger.Trace("> GetOverallProgress()");
             int overall = 0;
 
             if (_transfers != null)
             {
-                foreach (var pair in _transfers)
+                if (_transfers.Count > 0)
                 {
-                    overall += pair.Value.Progress;
-                }
+                    logger.Trace("> GetOverallProgress()");
+                    foreach (var pair in _transfers)
+                    {
+                        overall += pair.Value.Progress;
+                    }
 
-                if (overall > 0)
-                {
-                    overall = (overall) / (_transfers.Count);
+                    if (overall > 0)
+                    {
+                        overall = (overall) / (_transfers.Count);
+                    }
+                    logger.Trace($"< GetOverallProgress().return({overall})");
                 }
             }
 
-            logger.Trace($"< GetOverallProgress().return({overall})");
             return overall;
         }
 

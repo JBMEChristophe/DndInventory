@@ -30,10 +30,10 @@
         <Label Grid.Column="0" Grid.Row="1" Content="Background Image: " VerticalAlignment="Center" />
         <TextBox Grid.Column="2" Grid.Row="1" Margin="2" IsReadOnly="True" IsEnabled="False" Text="{Binding BackgroundPath}" />
         <Button Grid.Column="4" Grid.Row="1" Margin="4" Padding="4,0,4,0" Content="Browse" Command="{Binding BrowseCommand}" />
-        <Label Grid.Column="0" Grid.Row="2" Content="X: " VerticalAlignment="Center" Visibility="{Binding NewInventory, Converter={StaticResource VisibleIfTrueConverter}}"/>
-        <cc:NumericUpDown Grid.Column="2" Grid.Row="2" Margin="4" Value="{Binding XValue, Mode=TwoWay}" MinValue="1" MaxValue="25" StartValue="10" IsEnabled="{Binding NewInventory}" Visibility="{Binding NewInventory, Converter={StaticResource VisibleIfTrueConverter}}"/>
-        <Label Grid.Column="0" Grid.Row="3" Content="Y: " VerticalAlignment="Center" Visibility="{Binding NewInventory, Converter={StaticResource VisibleIfTrueConverter}}"/>
-        <cc:NumericUpDown Grid.Column="2" Grid.Row="3" Margin="4" Value="{Binding YValue, Mode=TwoWay}" MinValue="1" MaxValue="50" StartValue="15" IsEnabled="{Binding NewInventory}" Visibility="{Binding NewInventory, Converter={StaticResource VisibleIfTrueConverter}}"/>
+        <Label Grid.Column="0" Grid.Row="2" Content="X: " VerticalAlignment="Center" Visibility="{Binding CanResize, Converter={StaticResource VisibleIfTrueConverter}}"/>
+        <cc:NumericUpDown Grid.Column="2" Grid.Row="2" Margin="4" Value="{Binding XValue, Mode=TwoWay}" MinValue="1" MaxValue="25" StartValue="10" IsEnabled="{Binding CanResize}" Visibility="{Binding CanResize, Converter={StaticResource VisibleIfTrueConverter}}"/>
+        <Label Grid.Column="0" Grid.Row="3" Content="Y: " VerticalAlignment="Center" Visibility="{Binding CanResize, Converter={StaticResource VisibleIfTrueConverter}}"/>
+        <cc:NumericUpDown Grid.Column="2" Grid.Row="3" Margin="4" Value="{Binding YValue, Mode=TwoWay}" MinValue="1" MaxValue="50" StartValue="15" IsEnabled="{Binding CanResize}" Visibility="{Binding CanResize, Converter={StaticResource VisibleIfTrueConverter}}"/>
         <Button Grid.ColumnSpan="5" Grid.Row="4" Margin="4" Content="Save" Command="{Binding SaveCommand}" />
     </Grid>
 </Window>

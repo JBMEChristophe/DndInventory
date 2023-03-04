@@ -38,10 +38,13 @@ namespace InventoryControlLib
         private Guid itemSubscriptionToken;
         private Guid retrieveAllItemsSubscriptionToken;
         private Guid catalogSubscriptionToken;
+        private Guid dmTabUpdateSubscriptionToken;
 
         private GridManager manager;
+        private readonly string dmTabId;
+        private string currentDmTabId;
 
-        public InventoryGrid(string name, string backgroundPath, Size size, IMessageHub hub, bool canBeEdited = true, bool canBeDeleted = true)
+        public InventoryGrid(string name, string backgroundPath, Size size, IMessageHub hub, bool canBeEdited = true, bool canBeDeleted = true, string DMTabId = null)
         {
             this.DataContext = this;
             InitializeComponent();
@@ -54,6 +57,7 @@ namespace InventoryControlLib
             MessageHub = hub;
             CanBeDeleted = canBeDeleted;
             CanBeEdited = canBeEdited;
+            dmTabId = DMTabId;
         }
 
         void RemoveInventory(bool drop = false)
@@ -64,12 +68,15 @@ namespace InventoryControlLib
                 hub.Unsubscribe(itemSubscriptionToken);
                 hub.Unsubscribe(catalogSubscriptionToken);
                 hub.Unsubscribe(retrieveAllItemsSubscriptionToken);
+                hub.Unsubscribe(dmTabUpdateSubscriptionToken);
                 hub.Publish(new DeleteGrid
                 {
                     Id = Id
                 });
             }
         }
+
+        public bool IsActive { get { return (dmTabId == currentDmTabId); } }
 
         DelegateCommand deleteCommand;
         public ICommand DeleteCommand
@@ -265,6 +272,7 @@ namespace InventoryControlLib
                 itemSubscriptionToken = hub.Subscribe<ItemPositionUpdate>(ItemPositionUpdate);
                 retrieveAllItemsSubscriptionToken = hub.Subscribe<MoveAllItemsTo>(RetrieveAllItems);
                 catalogSubscriptionToken = hub.Subscribe<CatalogItemPositionUpdate>(CatalogItemPositionUpdate);
+                dmTabUpdateSubscriptionToken = hub.Subscribe<DmTabUpdate>(DmTabUpdate);
 
                 hub.Publish(new UpdateGrid
                 {
@@ -279,6 +287,11 @@ namespace InventoryControlLib
             deleteCommand.RaiseCanExecuteChanged();
             dropCommand.RaiseCanExecuteChanged();
             logger.Info($"({InventoryName})< Init()");
+        }
+
+        void DmTabUpdate(DmTabUpdate dmTabUpdate)
+        {
+            currentDmTabId = dmTabUpdate.Header;
         }
 
         void RetrieveAllItems(MoveAllItemsTo move)
@@ -589,8 +602,8 @@ namespace InventoryControlLib
             var height = Rows * CellHeight;
             var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
-            if (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
-                && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
+            if (IsActive && (releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
+                && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y))
             {
                 var cellX = (releasePoint.X - screenPoint.X) / CellWidth;
                 var cellY = (releasePoint.Y - screenPoint.Y) / CellHeight;
@@ -695,9 +708,9 @@ namespace InventoryControlLib
             var height = Rows * CellHeight;
             var screenPoint = Inventory.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
-            if (releasePoint.X < Application.Current.MainWindow.Width - 394 &&
+            if (IsActive && (releasePoint.X < Application.Current.MainWindow.Width - 394 &&
                 releasePoint.X < screenPoint.X + width && releasePoint.Y < screenPoint.Y + height
-                && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y)
+                && releasePoint.X > screenPoint.X && releasePoint.Y > screenPoint.Y))
             {
                 var cellX = (releasePoint.X - screenPoint.X) / CellWidth;
                 var cellY = (releasePoint.Y - screenPoint.Y) / CellHeight;

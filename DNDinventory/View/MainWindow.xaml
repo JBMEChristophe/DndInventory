@@ -8,7 +8,10 @@
         xmlns:icl="clr-namespace:InventoryControlLib.View;assembly=InventoryControlLib"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="MainWindow" Height="500" Width="800">
+        Title="MainWindow" Height="900" Width="1700">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -62,7 +65,24 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <cc:CustomScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Content="{Binding InventoryContent}" Canvas.ZIndex="1" Grid.ColumnSpan="2" Margin="0,0,0,0.04"/>
+            <TextBlock Grid.ColumnSpan="2" Canvas.ZIndex="2" Text="Clients will appear here once they join." Visibility="{Binding NoClientsJoinedVisible, Converter={StaticResource BoolToVisConverter} }"/>
+            <TabControl Grid.ColumnSpan="2" Canvas.ZIndex="1" ItemsSource="{Binding DmTabItems}" Visibility="{Binding ServerInventoryVisible, Converter={StaticResource BoolToVisConverter} }" SelectedItem="{Binding SelectedDmTab}">
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding Header}" />
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <cc:CustomScrollViewer 
+                            VerticalScrollBarVisibility="Auto" 
+                            HorizontalScrollBarVisibility="Auto"
+                            Content="{Binding Content}" />
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
+            </TabControl>
+            <cc:CustomScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Content="{Binding InventoryContent}" Canvas.ZIndex="1" Grid.ColumnSpan="2" Margin="0,0,0,0.04" Visibility="{Binding ClientInventoryVisible, Converter={StaticResource BoolToVisConverter} }"/>
             <Expander Grid.Column="2" FlowDirection="RightToLeft" ExpandDirection="Right" Margin="0,0,0,0.04">
                 <ContentControl FlowDirection="LeftToRight" Margin="5" Content="{Binding Catalog}" Canvas.ZIndex="2" />
             </Expander>

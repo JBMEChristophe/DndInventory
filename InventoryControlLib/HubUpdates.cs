@@ -9,26 +9,42 @@ using System.Windows.Controls;
 
 namespace InventoryControlLib
 {
-    class ItemPositionUpdate
+    class PositionUpdate
     {
-        public Item Item { get; set; }
         public Point Position { get; set; }
 
         public override string ToString()
         {
-            return $"item: [{Item}]; position: [{Position}]";
+            var str = $"Position: [{Position}]";
+
+            return str;
         }
     }
 
-    class CatalogItemPositionUpdate
+    class ItemPositionUpdate : PositionUpdate
     {
-        public CatalogItem Item { get; set; }
-        public Point Position { get; set; }
+        public Item Item { get; set; }
 
         public override string ToString()
         {
-            return $"item: [{Item}]; position: [{Position}]";
+            return $"item: [{Item}]; {base.ToString()}";
         }
+    }
+
+
+    class CatalogItemPositionUpdate : PositionUpdate
+    {
+        public CatalogItem Item { get; set; }
+
+        public override string ToString()
+        {
+            return $"item: [{Item}]; {base.ToString()}";
+        }
+    }
+
+    public class DmTabUpdate
+    {
+        public string Header { get; set; }
     }
 
     public class UpdateGrid

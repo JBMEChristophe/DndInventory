@@ -88,7 +88,7 @@ namespace DNDinventory.ViewModel
                 {
                     foreach (InventorySaveInfo info in infos)
                     {
-                        var invGuid = AddInventory(info.Name, NO_IMAGE, info.Size);
+                        var invGuid = AddInventory(InventoryContent, info.Name, NO_IMAGE, info.Size);
                         var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
 
                         if (File.Exists(info.Path))
@@ -118,7 +118,7 @@ namespace DNDinventory.ViewModel
             logger.Debug($"< LoadInventories()");
         }
 
-        private Guid AddInventory(string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
+        private Guid AddInventory(StackPanel panel, string name, string backgroundPath, Size size, bool canBeEdited = true, bool canBeDeleted = true)
         {
             logger.Debug($"> AddInventory(name:{name}, size:[{size}])");
             var inv = new InventoryGrid(name, backgroundPath, size, Hub, canBeEdited, canBeDeleted);
@@ -126,10 +126,29 @@ namespace DNDinventory.ViewModel
             inv.InventoryPickUpClicked += Inv_InventoryPickUpClicked;
             inv.Init();
 
-            InventoryContent.Children.Add(inv);
-            OnPropertyChange("InventoryContent");
+            panel.Children.Add(inv);
+            OnPropertyChange(nameof(panel));
             logger.Debug($"< AddInventory({name}, {size})");
             return inv.Id;
+        }
+
+        private void RemoveDMTabItem(DmTabItem item)
+        {
+            DmTabItems.Remove(item);
+            OnPropertyChange("DmTabItems");
+            OnPropertyChange("NoClientsJoinedVisible");
+        }
+
+        private DmTabItem AddDMTabItem(string header)
+        {
+            var item = new DmTabItem(header, Hub);
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                DmTabItems.Add(item);
+                OnPropertyChange("DmTabItems");
+                OnPropertyChange("NoClientsJoinedVisible");
+            });
+            return item;
         }
 
         private void Inv_InventoryPickUpClicked(object sender, InventoryGrid grid)
@@ -140,7 +159,7 @@ namespace DNDinventory.ViewModel
                 if(item.Model is InventoryItemModel)
                 {
                     var inventoryItemModel = item.Model as InventoryItemModel;
-                    var invGuid = AddInventory(inventoryItemModel.Name, inventoryItemModel.ImageUri, inventoryItemModel.Size);
+                    var invGuid = AddInventory(InventoryContent, inventoryItemModel.Name, inventoryItemModel.ImageUri, inventoryItemModel.Size);
                     var inventory = GridManager.Instance.Grids.Where(e => e.Id == invGuid).First().Inventory;
                     foreach (var invItem in inventoryItemModel.Items)
                     {
@@ -253,20 +272,6 @@ namespace DNDinventory.ViewModel
             logger.Info($"> SaveCatalog()");
         }
 
-        struct DefaultInventoryItem
-        {
-            public DefaultInventoryItem(Size size, bool edit, bool delete)
-            {
-                Size = size;
-                EditRights = edit;
-                DeleteRights = delete;
-            }
-
-            public Size Size;
-            public bool EditRights;
-            public bool DeleteRights;
-        }
-
         public Task<bool> SetupCatalog(IProgress<double> progressUpdate)
         {
             var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
@@ -329,22 +334,55 @@ namespace DNDinventory.ViewModel
             SetupDefaultInv();
         }
 
+        public bool SetupDefaultInvClient(StackPanel panel)
+        {
+            var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
+
+            logger.Debug($"> setupInv()");
+
+            Dictionary<string, DefaultInventorySettings> defaultInventories = new Dictionary<string, DefaultInventorySettings>
+                {
+                    { "Ground", new DefaultInventorySettings(new Size(5, 10), false, false )},
+                    { "Backpack", new DefaultInventorySettings(new Size(7, 7), false, true)},
+                };
+            foreach (var inventory in defaultInventories)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var id = AddInventory(panel, inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
+                    skipInventorySaveGuids.Add(id);
+
+                    if (inventory.Key == "Ground")
+                    {
+                        GridManager.Instance.GroundId = id;
+                    }
+                    if (inventory.Key == "Backpack")
+                    {
+                        GridManager.Instance.BackPackId = id;
+                    }
+                });
+            }
+
+            logger.Debug($"< setupInv()");
+            return true;
+        }
+
         public bool SetupDefaultInv()
         {
             var reduced_loading = settingsFileHandler.currentSettings.Debug == DebugSetting.ReducedItemLoading;
 
             logger.Debug($"> setupInv()");
 
-            Dictionary<string, DefaultInventoryItem> defaultInventories = new Dictionary<string, DefaultInventoryItem>
+            Dictionary<string, DefaultInventorySettings> defaultInventories = new Dictionary<string, DefaultInventorySettings>
                 {
-                    { "Ground", new DefaultInventoryItem(new Size(5, 10), false, false )},
-                    { "Backpack", new DefaultInventoryItem(new Size(7, 7), false, false)},
+                    { "Ground", new DefaultInventorySettings(new Size(5, 10), false, false )},
+                    { "Backpack", new DefaultInventorySettings(new Size(7, 7), false, true)},
                 };
             foreach (var inventory in defaultInventories)
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    var id = AddInventory(inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
+                    var id = AddInventory(InventoryContent, inventory.Key, NO_IMAGE, inventory.Value.Size, inventory.Value.EditRights, inventory.Value.DeleteRights);
                     skipInventorySaveGuids.Add(id);
 
                     if (inventory.Key == "Ground")
@@ -375,6 +413,54 @@ namespace DNDinventory.ViewModel
                     inventoryContent.Orientation = Orientation.Horizontal;
                 }
                 return inventoryContent;
+            }
+        }
+
+        private bool serverInventoryVisible;
+        public bool ServerInventoryVisible
+        {
+            get
+            {
+                return serverInventoryVisible;
+            }
+            set
+            {
+                if (serverInventoryVisible != value)
+                {
+                    serverInventoryVisible = value;
+                    clientInventoryVisible = !value;
+                    OnPropertyChange("ServerInventoryVisible");
+                    OnPropertyChange("ClientInventoryVisible");
+                    OnPropertyChange("NoClientsJoinedVisible");
+                }
+            }
+        }
+
+        public bool NoClientsJoinedVisible
+        {
+            get
+            {
+                return ServerInventoryVisible && dmTabItems.Count == 0;
+            }
+        }
+
+        private bool clientInventoryVisible;
+        public bool ClientInventoryVisible
+        {
+            get
+            {
+                return clientInventoryVisible;
+            }
+            set
+            {
+                if (clientInventoryVisible != value)
+                {
+                    clientInventoryVisible = value;
+                    serverInventoryVisible = !value;
+                    OnPropertyChange("ClientInventoryVisible");
+                    OnPropertyChange("ServerInventoryVisible");
+                    OnPropertyChange("NoClientsJoinedVisible");
+                }
             }
         }
 
@@ -562,6 +648,29 @@ namespace DNDinventory.ViewModel
             }
         }
 
+        private ObservableCollection<DmTabItem> dmTabItems;
+        public ObservableCollection<DmTabItem> DmTabItems
+        {
+            get { return dmTabItems; }
+            set
+            {
+                dmTabItems = value;
+                OnPropertyChange("DmTabItems");
+            }
+        }
+
+        private DmTabItem selectedDmTab;
+        public DmTabItem SelectedDmTab
+        {
+            get { return selectedDmTab; }
+            set
+            {
+                selectedDmTab = value;
+                hub.Publish(new DmTabUpdate { Header = selectedDmTab?.Header });
+                OnPropertyChange("SelectedDmTab");
+            }
+        }
+
         private void AddTransfer(Transfer t)
         {
             logger.Info($"> AddTransfer(transfer: [{t}])");
@@ -599,7 +708,7 @@ namespace DNDinventory.ViewModel
             else
             {
                 logger.Info($">< ExecuteConnect().Disconnect");
-                foreach (var client in transferClients)
+                foreach (var client in transferClients.ToArray())
                 {
                     client.Close();
                 }
@@ -644,11 +753,13 @@ namespace DNDinventory.ViewModel
                 startServerCommand.RaiseCanExecuteChanged();
                 stopServerCommand.RaiseCanExecuteChanged();
                 connectCommand?.RaiseCanExecuteChanged();
+                ServerInventoryVisible = true;
             }
             catch (Exception ex)
             {
                 ConnectionStatus = $"Unable to listing on port {Port.Trim()}";
                 logger.Warn(ex, ConnectionStatus);
+                ServerInventoryVisible = false;
             }
             logger.Info($"< ExecuteStartServer()");
         }
@@ -681,7 +792,7 @@ namespace DNDinventory.ViewModel
 
             if (transferClients.Count > 0)
             {
-                foreach (var client in transferClients)
+                foreach (var client in transferClients.ToList())
                 {
                     client.Close();
                 }
@@ -694,6 +805,7 @@ namespace DNDinventory.ViewModel
             startServerCommand.RaiseCanExecuteChanged();
             stopServerCommand.RaiseCanExecuteChanged();
             connectCommand?.RaiseCanExecuteChanged();
+            ClientInventoryVisible = true;
             logger.Info($"< ExecuteStopServer()");
         }
 
@@ -830,7 +942,7 @@ namespace DNDinventory.ViewModel
 
             if (viewModel.Saved)
             {
-                AddInventory(viewModel.InventoryName, viewModel.BackgroundPath, new Size(viewModel.XValue, viewModel.YValue));
+                AddInventory(InventoryContent, viewModel.InventoryName, viewModel.BackgroundPath, new Size(viewModel.XValue, viewModel.YValue));
             }
             logger.Info($"< ExecuteAddInventoryCommand()");
         }
@@ -1157,6 +1269,10 @@ namespace DNDinventory.ViewModel
             if (sender is TransferClient)
             {
                 var transferClient = sender as TransferClient;
+                App.Current.Dispatcher.Invoke((Action)delegate
+                {
+                    RemoveDMTabItem(transferClient.DmTabItem);
+                });
 
                 deregisterEvents(transferClient);
 
@@ -1179,7 +1295,10 @@ namespace DNDinventory.ViewModel
                     }
                 }
 
-                ProgressOverall = progress / Transfers.Count;
+                if (Transfers.Count > 0)
+                { ProgressOverall = progress / Transfers.Count; }
+                else
+                { ProgressOverall = 0; }
 
                 transferClients.Remove(transferClient);
                 ConnectionStatus = "No connection";
@@ -1265,6 +1384,7 @@ namespace DNDinventory.ViewModel
             ExecuteQuickLoadSettings();
 
             Transfers = new ObservableCollection<KeyValuePair<string, Transfer>>();
+            DmTabItems = new ObservableCollection<DmTabItem>();
 
             if (!Directory.Exists(outputFolder))
             {
@@ -1275,6 +1395,7 @@ namespace DNDinventory.ViewModel
             var typeSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultTypeSettings.xml");
             itemTypeSettingManager.LoadOrCreateAndSaveDefault(typeSettingsPath);
             SetupDefaultInv();
+            ClientInventoryVisible = true;
 
             logger.Info($"< MainViewModel()");
         }
@@ -1338,6 +1459,8 @@ namespace DNDinventory.ViewModel
         {
             logger.Info($"> Listener_Accepted(sender: {sender}, SocketAcceptedEventArgs: {e})");
             var transferClient = new TransferClient(e.Accepted);
+            transferClient.DmTabItem = AddDMTabItem($"player {DmTabItems.Count}");
+            transferClient.DmTabItem.SetupDefaultInvClient();
             transferClients.Add(transferClient);
             transferClient.OutputFolder = outputFolder;
 

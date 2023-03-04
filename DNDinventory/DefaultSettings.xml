@@ -5,5 +5,5 @@
   <OutputFolder>Transfers</OutputFolder>
   <ImagesFolder>Images</ImagesFolder>
   <CatalogFolder>Catalogs</CatalogFolder>
-  <Debug>ReducedItemLoading</Debug>
+  <!--<Debug>ReducedItemLoading</Debug>-->
 </Settings>

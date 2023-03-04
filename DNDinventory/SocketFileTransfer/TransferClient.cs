@@ -1,4 +1,5 @@
-﻿using DNDinventory.SocketFileTransfer.Packet;
+﻿using DNDinventory.Model;
+using DNDinventory.SocketFileTransfer.Packet;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +30,7 @@ namespace DNDinventory.SocketFileTransfer
         public bool Closed { get; private set; }
         public string OutputFolder { get; set; }
         public IPEndPoint EndPoint { get; private set; }
+        public DmTabItem DmTabItem { get; set; }
 
         public event TransferEventHandler Queued;
         public event TransferEventHandler ProgressChanged;
@@ -165,7 +167,7 @@ namespace DNDinventory.SocketFileTransfer
 
         public int GetOverallProgress()
         {
-            logger.Debug("> GetOverallProgress()");
+            logger.Trace("> GetOverallProgress()");
             int overall = 0;
 
             if (_transfers != null)
@@ -181,7 +183,7 @@ namespace DNDinventory.SocketFileTransfer
                 }
             }
 
-            logger.Debug($"< GetOverallProgress().return({overall})");
+            logger.Trace($"< GetOverallProgress().return({overall})");
             return overall;
         }
 

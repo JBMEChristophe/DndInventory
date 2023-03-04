@@ -167,23 +167,26 @@ namespace DNDinventory.SocketFileTransfer
 
         public int GetOverallProgress()
         {
-            logger.Trace("> GetOverallProgress()");
             int overall = 0;
 
             if (_transfers != null)
             {
-                foreach (var pair in _transfers)
+                if (_transfers.Count > 0)
                 {
-                    overall += pair.Value.Progress;
-                }
+                    logger.Trace("> GetOverallProgress()");
+                    foreach (var pair in _transfers)
+                    {
+                        overall += pair.Value.Progress;
+                    }
 
-                if (overall > 0)
-                {
-                    overall = (overall) / (_transfers.Count);
+                    if (overall > 0)
+                    {
+                        overall = (overall) / (_transfers.Count);
+                    }
+                    logger.Trace($"< GetOverallProgress().return({overall})");
                 }
             }
 
-            logger.Trace($"< GetOverallProgress().return({overall})");
             return overall;
         }
 
@@ -236,7 +239,7 @@ namespace DNDinventory.SocketFileTransfer
             PacketReader packetReader = new PacketReader(_buffer);
 
             Headers header = (Headers)packetReader.ReadByte();
-            logger.Trace($"> process(header: {header.ToString()})");
+            logger.Trace($"> process(header: {header})");
 
             switch (header)
             {
@@ -245,7 +248,7 @@ namespace DNDinventory.SocketFileTransfer
                         int id = packetReader.ReadInt32();
                         string fileName = packetReader.ReadString();
                         long length = packetReader.ReadInt64();
-                        logger.Trace($"id: {id}, fileName: {fileName}, length: {length}");
+                        logger.Trace($"Queue id: {id}, fileName: {fileName}, length: {length}");
 
                         TransferQueue queue = TransferQueue.CreateDownloadQueue(this, id, Path.Combine(OutputFolder, Path.GetFileName(fileName)), length);
 
@@ -257,7 +260,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Start:
                     {
                         int id = packetReader.ReadInt32();
-                        logger.Trace($"id: {id}");
+                        logger.Trace($"Start id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {
@@ -268,7 +271,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Stop:
                     {
                         int id = packetReader.ReadInt32();
-                        logger.Trace($"id: {id}");
+                        logger.Trace($"Stop id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {
@@ -285,7 +288,7 @@ namespace DNDinventory.SocketFileTransfer
                 case Headers.Pause:
                     {
                         int id = packetReader.ReadInt32();
-                        logger.Trace($"id: {id}");
+                        logger.Trace($"Pause id: {id}");
 
                         if (_transfers.ContainsKey(id))
                         {

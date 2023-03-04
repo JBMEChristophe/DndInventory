@@ -144,7 +144,7 @@ namespace InventoryControlLib
         private void ExecuteEdit()
         {
             logger.Info($"> ExecuteEdit()");
-            InventoryEditorViewModel viewModel = new InventoryEditorViewModel(InventoryName, InventoryBackground);
+            InventoryEditorViewModel viewModel = new InventoryEditorViewModel(InventoryName, InventoryBackground, dmTabId != null) { XValue = Columns, YValue = Rows};
             viewModel.SaveClicked += InventoryEditorViewModel_SaveClicked; ;
             InventoryEditorWindow inventoryEditorWindow = new InventoryEditorWindow(viewModel);
             inventoryEditorWindow.ShowDialog();
@@ -155,6 +155,7 @@ namespace InventoryControlLib
         {
             InventoryName = sender.InventoryName;
             InventoryBackground = sender.BackgroundPath;
+            UpdateEdit(new Size(Columns, Rows), new Size(sender.XValue, sender.YValue));
         }
 
         private bool CanExecuteEdit()
@@ -242,6 +243,143 @@ namespace InventoryControlLib
             }
         }
 
+        public void UpdateEdit(Size oldSize, Size newSize)
+        {
+            logger.Info($"({InventoryName})> UpdateEdit()");
+
+            if (Inventory.ColumnDefinitions.Count > 0 && Inventory.RowDefinitions.Count > 0)
+            {
+                var widthChange = (int)(newSize.Width - oldSize.Width);
+                var heightChange = (int)(newSize.Height - oldSize.Height);
+                
+                if (widthChange > 0)
+                {
+                    Columns = (int)newSize.Width;
+                    for (int x = Inventory.ColumnDefinitions.Count - widthChange; x < Inventory.ColumnDefinitions.Count; x++)
+                    {
+                        for (int y = 0; y < oldSize.Height; y++)
+                        {
+                            ExtendedBorder border = new ExtendedBorder
+                            {
+                                Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 0)),
+                                BorderBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
+                                BorderThickness = new Thickness(0.75),
+                                Width = CellWidth,
+                                Height = CellHeight,
+                                CellX = x,
+                                CellY = y,
+                            };
+                            Grid.SetColumn(border, x);
+                            Grid.SetRow(border, y);
+                            Inventory.Children.Add(border);
+                        }
+                    }
+                }
+                else if (widthChange < 0)
+                {
+                    bool canShrink = true;
+                    var grid = FullGrid();
+                    for (int x = (int)newSize.Width; x < (int)oldSize.Width; x++)
+                    {
+                        for (int y = 0; y < oldSize.Height; y++)
+                        {
+                            if(grid[x,y] != null && grid[x, y] is Item)
+                            {
+                                canShrink = false;
+                            }
+                        }
+                    }
+
+                    if(canShrink)
+                    {
+                        Columns = (int)newSize.Width;
+                        for (int x = (int)newSize.Width; x < (int)oldSize.Width; x++)
+                        {
+                            for (int y = 0; y < oldSize.Height; y++)
+                            {
+                                var item = grid[x, y];
+                                if(item is ExtendedBorder)
+                                {
+                                    var itemToRemove = item as ExtendedBorder;
+                                    Inventory.Children.Remove(itemToRemove);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (heightChange > 0)
+                {
+                    Rows = (int)newSize.Height;
+                    for (int y = Inventory.RowDefinitions.Count - heightChange; y < Inventory.RowDefinitions.Count; y++)
+                    {
+                        for (int x = 0; x < Inventory.ColumnDefinitions.Count; x++)
+                        {
+                            ExtendedBorder border = new ExtendedBorder
+                            {
+                                Background = new SolidColorBrush(Color.FromArgb(64, 0, 0, 0)),
+                                BorderBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
+                                BorderThickness = new Thickness(0.75),
+                                Width = CellWidth,
+                                Height = CellHeight,
+                                CellX = x,
+                                CellY = y,
+                            };
+                            Grid.SetColumn(border, x);
+                            Grid.SetRow(border, y);
+                            Inventory.Children.Add(border);
+                        }
+                    }
+                }
+                else if (heightChange < 0)
+                {
+                    bool canShrink = true;
+                    var grid = FullGrid();
+                    for (int y = (int)newSize.Height; y < (int)oldSize.Height; y++)
+                    {
+                        for (int x = 0; x < Columns; x++)
+                        {
+                            if (grid[x, y] != null && grid[x, y] is Item)
+                            {
+                                canShrink = false;
+                            }
+                        }
+                    }
+
+                    if (canShrink)
+                    {
+                        Rows = (int)newSize.Height;
+                        for (int y = (int)newSize.Height; y < (int)oldSize.Height; y++)
+                        {
+                            for (int x = 0; x < Columns; x++)
+                            {
+                                var item = grid[x, y];
+                                if (item is ExtendedBorder)
+                                {
+                                    var itemToRemove = item as ExtendedBorder;
+                                    Inventory.Children.Remove(itemToRemove);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                hub.Publish(new UpdateGrid
+                {
+                    Id = Id,
+                    Name = InventoryName,
+                    Inventory = this,
+                    Grid = Inventory,
+                    CellSize = new Size(CellWidth, CellHeight),
+                    Size = new Size(Columns * CellWidth, Rows * CellHeight)
+                });
+            }
+
+            deleteCommand.RaiseCanExecuteChanged();
+            dropCommand.RaiseCanExecuteChanged();
+            logger.Info($"({InventoryName})< UpdateEdit()");
+        }
+
         public void Init()
         {
             logger.Info($"({InventoryName})> Init()");
@@ -254,13 +392,15 @@ namespace InventoryControlLib
                 {
                     for (int x = 0; x < Inventory.RowDefinitions.Count; x++)
                     {
-                        Border border = new Border
+                        ExtendedBorder border = new ExtendedBorder
                         {
                             Background = new SolidColorBrush(Color.FromArgb(64,0,0,0)),
                             BorderBrush = new SolidColorBrush(Color.FromArgb(128, 0, 0, 0)),
                             BorderThickness = new Thickness(0.75),
                             Width = CellWidth,
                             Height = CellHeight,
+                            CellX = x,
+                            CellY = y,
                         };
                         Grid.SetColumn(border, y);
                         Grid.SetRow(border, x);
@@ -426,6 +566,30 @@ namespace InventoryControlLib
             }
         }
 
+        private object[,] FullGrid()
+        {
+            object[,] grid = ArrayHelper.GetNew2DArray<object>(Columns, Rows, null);
+            foreach (var invItem in Inventory.Children)
+            {
+                if (invItem is ExtendedBorder)
+                {
+                    var curItem = invItem as ExtendedBorder;
+                    grid[curItem.CellX, curItem.CellY] = curItem;
+                }
+                if (invItem is Item)
+                {
+                    var curItem = invItem as Item;
+                    for (int y = curItem.Model.CellY; y < curItem.Model.CellY + curItem.Model.CellSpanY; y++)
+                    {
+                        for (int x = curItem.Model.CellX; x < curItem.Model.CellX + curItem.Model.CellSpanX; x++)
+                        {
+                            grid[x, y] = curItem;
+                        }
+                    }
+                }
+            }
+            return grid;
+        }
         private Item[,] OccupiedGrid(Item currentItem = null)
         {
             Item[,] grid = ArrayHelper.GetNew2DArray<Item>(Rows, Columns, null);
@@ -630,16 +794,19 @@ namespace InventoryControlLib
                 }
 
                 var occupyGrid = OccupiedGrid(item);
-                if (occupyGrid[icellY, icellX] != null)
+                if (!cancelMove)
                 {
-                    if (item.Model.ID == occupyGrid[icellY, icellX].Model.ID && item.Model.IsStackable)
+                    if (occupyGrid[icellY, icellX] != null)
                     {
-                        occupyGrid[icellY, icellX].Model.Quantity += item.Model.Quantity;
-                        stacked = true;
-                    }
-                    else
-                    {
-                        cancelMove = true;
+                        if (item.Model.ID == occupyGrid[icellY, icellX].Model.ID && item.Model.IsStackable)
+                        {
+                            occupyGrid[icellY, icellX].Model.Quantity += item.Model.Quantity;
+                            stacked = true;
+                        }
+                        else
+                        {
+                            cancelMove = true;
+                        }
                     }
                 }
 

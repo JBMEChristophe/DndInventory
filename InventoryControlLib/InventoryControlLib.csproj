@@ -102,6 +102,7 @@
       <DependentUpon>InventoryGrid.xaml</DependentUpon>
     </Compile>
     <Compile Include="Model\CatalogItemModel.cs" />
+    <Compile Include="Model\ExtendedBorder.cs" />
     <Compile Include="Model\InventoryItemModel.cs" />
     <Compile Include="Model\ItemType.cs" />
     <Compile Include="Model\InventorySaveModel.cs" />

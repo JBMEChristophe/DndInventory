@@ -21,29 +21,29 @@ namespace InventoryControlLib.ViewModel
         public event SaveEvent SaveClicked; 
         public Action CloseWindow { get; set; }
 
-        public InventoryEditorViewModel(string inventoryName, string backgroundPath, bool newInventory = false)
+        public InventoryEditorViewModel(string inventoryName, string backgroundPath, bool canResize = false)
         {
             logger.Info($"> InventoryEditorViewModel()");
             InventoryName = inventoryName;
             BackgroundPath = backgroundPath;
-            NewInventory = newInventory;
+            CanResize = canResize;
             XValue = 1;
             YValue = 1;
             logger.Info($"< InventoryEditorViewModel()");
         }
 
-        bool newInventory;
-        public bool NewInventory
+        bool canResize;
+        public bool CanResize
         {
             get
             {
-                return newInventory;
+                return canResize;
             }
             set
             {
-                if (newInventory != value)
+                if (canResize != value)
                 {
-                    newInventory = value;
+                    canResize = value;
                     OnPropertyChange("NewInventory");
                 }
             }

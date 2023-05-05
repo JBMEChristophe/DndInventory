@@ -3,7 +3,8 @@
 
 import csv
 import argparse
-import requests
+import urllib.request
+import json
 import time
 import asyncio
 from aiohttp import ClientSession, ClientResponseError
@@ -20,8 +21,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 default_image_base_path = "DNDinventory/Images/Items"
 image_download_base = "https://5e.tools/img/items"
-#image_download_base = "https://github.com/5etools-mirror-1/5etools-mirror-1.github.io/raw/master/img"
-csv_data_index = {'Name':0, 'Source':1, 'Rarity':2, 'Type':3, 'Attunement':4, 'Properties':5, 'Weight':6, 'Value':7, 'Description':8}
+items_download_json = "https://5e.tools/data/items.json"
+item_base_url = "https://5e.tools/items.html#"
 
 class Item:
     def __init__(self):
@@ -32,8 +33,7 @@ class Item:
         self.Source = None
         self.Rarity = None
         self.Attunement = None
-        self.Properties = None
-        self.Description = None
+        self.Url = None
 
     def __repr__(self):
         return str(self)
@@ -168,35 +168,38 @@ async def save_images_async(paths, responses):
 
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--item_path', default='Items.csv', help='Item input path')
+    parser.add_argument('-i', '--item_path', default='Items.json', help='Item input path')
     parser.add_argument('-img', '--image_path', default=default_image_base_path, help='Output item image path')
     args = parser.parse_args()
 
+    print("Downloading items list")
+    req = urllib.request.Request(items_download_json, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req) as url:
+        data = json.load(url)
+        with open(args.item_path, 'w', encoding='utf8') as f:
+            f.write(json.dumps(data, indent=4))
+
+    items = data["item"]
+
+    print("Parsing item data")
     export_items = []
-    lines = []
-
-    print("Open csv file")
-    with open(args.item_path, 'r', encoding='utf8') as f:
-        reader = csv.reader(f)
-        next(reader)
-        lines = list(reader)
-
-    print("Parsing csv data")
     downloads = []
-    l = len(lines)
+    l = len(items)
     printProgressBar(0, l, prefix = 'Progress:', suffix = 'Complete', length = 50)
-    for row_index, row in enumerate(lines):
+    for index, item in enumerate(items):
         export_item = Item()
-        for index, column in enumerate(row):
-            value = column
-            if('â€”' in value or 'Ã—' in value):
+        for key, value in item.items():
+            if key not in {"name", "type", "value", "weight", "source", "rarity", "reqAttune"}:
+                continue
+
+            if(value is str and ('â€”' in value or 'Ã—' in value)):
                 value = value.replace('â€”','')
                 value = value.replace('Ã—','x')
-
-            if index == csv_data_index['Name']:                
+                
+            if key == 'name':                
                 export_item.Name = value
-                printProgressBar(row_index, l, prefix = 'Progress:', suffix = export_item.Name, length = 50)
-            if index == csv_data_index['Type']:
+                printProgressBar(index, l, prefix = 'Progress:', suffix = export_item.Name, length = 50)
+            elif key == 'type':
                 tmp = [] 
                 if(value != ""):               
                     for t in value.split(', '):
@@ -209,21 +212,19 @@ async def main() -> None:
                     export_item.Type = tmp
                 else:
                     export_item.Type = None
-            if index == csv_data_index['Value']:
+            elif key == 'value':
                 export_item.Cost = value
-            if index == csv_data_index['Weight']:
+            elif key == 'weight':
                 export_item.Weight = value
-            if index == csv_data_index['Source']:
+            elif key == 'source':
                 export_item.Source = value
-            if index == csv_data_index['Rarity']:
+            elif key == 'rarity':
                 export_item.Rarity = value
-            if index == csv_data_index['Attunement']:
+            elif key == 'reqAttune':
                 export_item.Attunement = value
-            if index == csv_data_index['Properties']:
-                export_item.Properties = value
-            if index == csv_data_index['Description']:
-                export_item.Description = value
-            index += 1
+
+        item_web_name = str.replace(export_item.Name, " ", "%20")
+        export_item.Url = f"{item_base_url}{item_web_name}_{export_item.Source}"
         export_items.append(export_item)
         save_path = f"{args.image_path}/{export_item.Name}.jpg"
         image_url = f"{image_download_base}/{export_item.Source}/{export_item.Name}.jpg"

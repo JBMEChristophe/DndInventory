@@ -178,7 +178,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>echo Creating Default Items from CSV
-start /wait py -3 $(ProjectDir)..\5eToolScraper.py -i "$(ProjectDir)..\Items.csv" -img "$(ProjectDir)Images\Items"
+start /wait py -3 $(ProjectDir)..\5eToolScraper.py -i "$(ProjectDir)..\Items.json" -img "$(ProjectDir)Images\Items"
 echo Copy Default Items if newer
 echo F|xcopy $(ProjectDir)..\Items.xml $(ProjectDir)\DefaultItems.xml /D /R /Y /K</PreBuildEvent>
   </PropertyGroup>

@@ -1,6 +1,4 @@
-﻿using DNDinventory.Model;
-using DNDinventory.SocketFileTransfer.Packet;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,8 +6,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using Utilities.Sockets.SocketFileTransfer.Packet;
 
-namespace DNDinventory.SocketFileTransfer
+namespace Utilities.Sockets.SocketFileTransfer
 {
     public delegate void TransferEventHandler(object sender, TransferQueue queue);
     public delegate void ConnectCallback(object sender, string error);
@@ -30,7 +29,6 @@ namespace DNDinventory.SocketFileTransfer
         public bool Closed { get; private set; }
         public string OutputFolder { get; set; }
         public IPEndPoint EndPoint { get; private set; }
-        public DmTabItem DmTabItem { get; set; }
 
         public event TransferEventHandler Queued;
         public event TransferEventHandler ProgressChanged;

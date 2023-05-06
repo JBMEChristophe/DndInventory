@@ -79,12 +79,6 @@
     <Compile Include="Model\InventorySaveInfo.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SettingsFileHandler.cs" />
-    <Compile Include="SocketFileTransfer\Headers.cs" />
-    <Compile Include="SocketFileTransfer\Listener.cs" />
-    <Compile Include="SocketFileTransfer\Packet\PacketReader.cs" />
-    <Compile Include="SocketFileTransfer\Packet\PacketWriter.cs" />
-    <Compile Include="SocketFileTransfer\TransferClient.cs" />
-    <Compile Include="SocketFileTransfer\TransferQueue.cs" />
     <Compile Include="Model\Transfer.cs" />
     <Compile Include="TaskUtilities.cs" />
     <Compile Include="UpdatePolicy.cs" />

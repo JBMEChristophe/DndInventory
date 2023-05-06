@@ -8,7 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DNDinventory.SocketFileTransfer.Packet
+namespace Utilities.Sockets.SocketFileTransfer.Packet
 {
     public class PacketWriter : BinaryWriter
     {

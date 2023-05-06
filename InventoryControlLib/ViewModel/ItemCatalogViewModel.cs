@@ -328,7 +328,7 @@ namespace InventoryControlLib.ViewModel
             {
                 foreach (var filterItem in dict)
                 {
-                    switch (filterItem.Key)
+                    switch (filterItem.Key.ToUpper())
                     {
                         case "NAME":
                             if (string.IsNullOrEmpty(filterItem.Value))
@@ -372,6 +372,23 @@ namespace InventoryControlLib.ViewModel
                             else
                             {
                                 if (item.Source.ToUpper().Contains(filterItem.Value))
+                                {
+                                    accepts.Add(true);
+                                }
+                                else
+                                {
+                                    accepts.Add(false);
+                                }
+                            }
+                            break;
+                        case "RARITY":
+                            if (string.IsNullOrEmpty(filterItem.Value))
+                            {
+                                accepts.Add(true);
+                            }
+                            else
+                            {
+                                if (item.Rarity.ToUpper().Contains(filterItem.Value))
                                 {
                                     accepts.Add(true);
                                 }

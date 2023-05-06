@@ -6,11 +6,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DNDinventory.SocketFileTransfer
+namespace Utilities.Sockets.SocketFileTransfer
 {
-    internal delegate void SocketAcceptedHandler(object sender, SocketAcceptedEventArgs e);
+    public delegate void SocketAcceptedHandler(object sender, SocketAcceptedEventArgs e);
 
-    internal class SocketAcceptedEventArgs : EventArgs
+    public class SocketAcceptedEventArgs : EventArgs
     {
         public Socket Accepted
         {
@@ -38,7 +38,7 @@ namespace DNDinventory.SocketFileTransfer
         }
     }
 
-    internal class Listener
+    public class Listener
     {
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 

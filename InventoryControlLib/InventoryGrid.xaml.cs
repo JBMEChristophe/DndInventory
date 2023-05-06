@@ -19,6 +19,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Utilities;
+using Utilities.Sockets.EventSocket.Messages;
 
 namespace InventoryControlLib
 {
@@ -705,11 +706,8 @@ namespace InventoryControlLib
                 }
                 foreach (var curItem in removedItems)
                 {
-                    if (curItem.GridParent.Children.Contains(item))
-                    {
-                        curItem.GridParent.Children.Remove(curItem);
-                        curItem.RemoveEvents();
-                    }
+                    curItem.GridParent.Children.Remove(curItem);
+                    curItem.RemoveEvents();
                 }
             }
             logger.Debug($"({InventoryName})< Item_StackClicked(sender: {sender})");
@@ -752,8 +750,13 @@ namespace InventoryControlLib
             var i2End = new Point(Inventory.ColumnDefinitions.Count - 1, Inventory.RowDefinitions.Count - 1);
 
             var result = (i1Start.X >= i2Start.X && i1End.X <= i2End.X) && (i1Start.Y >= i2Start.Y && i1End.Y <= i2End.Y);
-            logger.Debug($"({InventoryName})> IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}).return({result})");
+            logger.Debug($"({InventoryName})< IsWithinGridBoundary(newX: {newX}, newY: {newY}, spanX: {spanX}, spanY: {spanY}).return({result})");
             return result;
+        }
+
+        private void ItemMovedEvent(string itemId, ItemMovedMessage message)
+        {
+
         }
 
         private void ItemPositionUpdate(ItemPositionUpdate positionUpdate)

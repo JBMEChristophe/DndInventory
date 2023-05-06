@@ -14,6 +14,8 @@ using InventoryControlLib.Model;
 using DNDinventory.ViewModel;
 using DNDinventory.View;
 using WinForms = System.Windows.Forms;
+using Utilities.Sockets.EventSocket;
+using Utilities.Sockets.EventSocket.Messages;
 
 namespace DNDinventory.Model
 {
@@ -22,6 +24,9 @@ namespace DNDinventory.Model
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private string NO_IMAGE;
+
+        private EventSocketServer eventServer;
+        private EventSocketClient eventClient;
 
         public string Header { get; set; }
 
@@ -50,7 +55,7 @@ namespace DNDinventory.Model
             }
         }
 
-        public DmTabItem(string header, IMessageHub hub)
+        public DmTabItem(string header, IMessageHub hub, string clientIP, int port = 30503)
         {
             Header = header;
             var tmp_NO_IMAGE = new Uri(@"Images\No_image_available.png", UriKind.Relative);
@@ -60,6 +65,22 @@ namespace DNDinventory.Model
             }
             NO_IMAGE = tmp_NO_IMAGE.AbsoluteUri;
             this.hub = hub;
+
+            eventServer = new EventSocketServer(port);
+            eventClient = new EventSocketClient(clientIP, port);
+
+            eventServer.HandleMessage += EventServer_HandleMessage;
+            eventServer.Start();
+        }
+
+        private void EventServer_HandleMessage(Message message)
+        {
+            throw new NotImplementedException();
+        }
+
+        ~DmTabItem()
+        {
+            eventServer.Stop();
         }
 
         public bool SetupDefaultInvClient()

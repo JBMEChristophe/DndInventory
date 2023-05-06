@@ -16,7 +16,6 @@ namespace DNDinventory
     /// </summary>
     public partial class App : Application
     {
-        public static Random Random;
         private SplashScreenWindow SplashScreen;
         private MainWindow mainWindow;
         private SplashScreenViewModel viewModel;
@@ -25,7 +24,6 @@ namespace DNDinventory
 
         public App()
         {
-            Random = new Random();
             progress = new Progress<double>(MainViewModel_LoadProgressChanged);
             curProgress = 0.0;
         }

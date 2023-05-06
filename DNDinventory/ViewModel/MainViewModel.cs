@@ -1,5 +1,5 @@
 ﻿using DNDinventory.Model;
-using DNDinventory.SocketFileTransfer;
+using Utilities.Sockets.SocketFileTransfer;
 using Prism.Commands;
 using System;
 using System.Collections.Generic;
@@ -23,6 +23,8 @@ using Utilities;
 using InventoryControlLib.ViewModel;
 using InventoryControlLib;
 using DNDinventory.View;
+using Utilities.Sockets.EventSocket;
+using Utilities.Sockets.EventSocket.Messages;
 
 namespace DNDinventory.ViewModel
 {
@@ -35,6 +37,7 @@ namespace DNDinventory.ViewModel
         private readonly IMessageHub hub;
         private Listener listener;
         private List<TransferClient> transferClients;
+        private Dictionary<TransferClient, DmTabItem> tabItems;
         private SettingsFileHandler settingsFileHandler;
         private string outputFolder;
         private string settingsFileLocation;
@@ -47,6 +50,9 @@ namespace DNDinventory.ViewModel
         private const string inventoriesInfoPath = "InventoryInfo.xml";
 
         private bool serverRunning;
+
+        private EventSocketServer eventServer;
+        private EventSocketClient eventClient;
 
         private void SaveInventories()
         {
@@ -139,9 +145,9 @@ namespace DNDinventory.ViewModel
             OnPropertyChange("NoClientsJoinedVisible");
         }
 
-        private DmTabItem AddDMTabItem(string header)
+        private DmTabItem AddDMTabItem(string header, string clientIP, int port = 30503)
         {
-            var item = new DmTabItem(header, Hub);
+            var item = new DmTabItem(header, Hub, clientIP, port);
             Application.Current.Dispatcher.Invoke(() =>
             {
                 DmTabItems.Add(item);
@@ -704,10 +710,20 @@ namespace DNDinventory.ViewModel
                 var transferClient = new TransferClient();
                 transferClients.Add(transferClient);
                 transferClient.Connect(Host.Trim(), int.Parse(Port.Trim()), connectCallback);
+
+                eventServer = new EventSocketServer();
+                eventClient = new EventSocketClient(Host.Trim());
+
+                eventServer.HandleMessage += EventServer_HandleMessage;
+                eventServer.Start();
             }
             else
             {
                 logger.Info($">< ExecuteConnect().Disconnect");
+                eventServer.Stop();
+                eventServer = null;
+                eventClient = null;
+
                 foreach (var client in transferClients.ToArray())
                 {
                     client.Close();
@@ -717,6 +733,11 @@ namespace DNDinventory.ViewModel
 
             sendFileCommand.RaiseCanExecuteChanged();
             logger.Info($"< ExecuteConnect()");
+        }
+
+        private void EventServer_HandleMessage(Message message)
+        {
+            throw new NotImplementedException();
         }
 
         private bool CanExecuteConnect()
@@ -1271,7 +1292,7 @@ namespace DNDinventory.ViewModel
                 var transferClient = sender as TransferClient;
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    RemoveDMTabItem(transferClient.DmTabItem);
+                    RemoveDMTabItem(tabItems[transferClient]);
                 });
 
                 deregisterEvents(transferClient);
@@ -1459,8 +1480,9 @@ namespace DNDinventory.ViewModel
         {
             logger.Info($"> Listener_Accepted(sender: {sender}, SocketAcceptedEventArgs: {e})");
             var transferClient = new TransferClient(e.Accepted);
-            transferClient.DmTabItem = AddDMTabItem($"player {DmTabItems.Count}");
-            transferClient.DmTabItem.SetupDefaultInvClient();
+            var transferClientIp = e.EndPoint.Address.ToString();
+            tabItems[transferClient] = AddDMTabItem($"player {DmTabItems.Count}", transferClientIp);
+            tabItems[transferClient].SetupDefaultInvClient();
             transferClients.Add(transferClient);
             transferClient.OutputFolder = outputFolder;
 

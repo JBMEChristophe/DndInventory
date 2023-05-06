@@ -1,4 +1,4 @@
-﻿using DNDinventory.SocketFileTransfer.Packet;
+﻿using Utilities.Sockets.SocketFileTransfer.Packet;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,8 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DNDinventory.SocketFileTransfer
+namespace Utilities.Sockets.SocketFileTransfer
 {
+
     public enum QueueType : byte
     {
         Download,
@@ -17,6 +18,7 @@ namespace DNDinventory.SocketFileTransfer
 
     public class TransferQueue
     {
+        public static Random Random = new Random();
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         public static TransferQueue CreateUploadQueue(TransferClient client, string fileName)
@@ -31,7 +33,7 @@ namespace DNDinventory.SocketFileTransfer
                 queue.FS = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
                 queue.Thread = new Thread(new ParameterizedThreadStart(transferProc));
                 queue.Thread.IsBackground = true;
-                queue.Id = App.Random.Next();
+                queue.Id = Random.Next();
                 queue.Length = queue.FS.Length;
                 queue.SelfCreated = true;
 

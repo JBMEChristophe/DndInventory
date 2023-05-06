@@ -1,4 +1,4 @@
-﻿using DNDinventory.SocketFileTransfer;
+﻿using Utilities.Sockets.SocketFileTransfer;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
